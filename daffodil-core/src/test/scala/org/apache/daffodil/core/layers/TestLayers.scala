@@ -95,6 +95,47 @@ class TestLayers {
     TestUtils.testUnparsing(sch, infoset, data, areTracing)
   }
 
+  @Test def testDiscriminatorInsideLayerReleasesTheOuterMark(): Unit = {
+    val sch = SchemaUtils.dfdlTestSchema(
+      <xs:include schemaLocation="/org/apache/daffodil/xsd/DFDLGeneralFormat.dfdl.xsd"/>
+      <xs:import namespace="urn:org.apache.daffodil.layers.gzip"
+        schemaLocation="/org/apache/daffodil/layers/xsd/gzipLayer.dfdl.xsd"/>,
+      <dfdl:format ref="ex:GeneralFormat" representation="binary"/>,
+      <xs:element name="e1" dfdl:lengthKind="implicit"
+                  xmlns:gz="urn:org.apache.daffodil.layers.gzip">
+        <xs:complexType>
+          <xs:choice>
+            <xs:sequence>
+              <xs:sequence dfdlx:layer="gz:gzip">
+                <xs:element name="body" dfdl:lengthKind="explicit" dfdl:length="1"
+                            dfdl:lengthUnits="bytes">
+                  <xs:complexType>
+                    <xs:sequence>
+                      <xs:element name="letter" type="xs:string"
+                                  dfdl:lengthKind="explicit" dfdl:length="1">
+                        <xs:annotation>
+                          <xs:appinfo source="http://www.ogf.org/dfdl/">
+                            <dfdl:discriminator>{{ . eq 'A' }}</dfdl:discriminator>
+                          </xs:appinfo>
+                        </xs:annotation>
+                      </xs:element>
+                    </xs:sequence>
+                  </xs:complexType>
+                </xs:element>
+              </xs:sequence>
+            </xs:sequence>
+            <xs:element name="other" type="xs:string" dfdl:lengthKind="explicit" dfdl:length="1"/>
+          </xs:choice>
+        </xs:complexType>
+      </xs:element>,
+      elementFormDefault = "unqualified"
+    )
+    val data = makeGZIPData("A")
+    val infoset = <ex:e1 xmlns:ex={example}><body><letter>A</letter></body></ex:e1>
+    val (_, actual) = TestUtils.testBinary(sch, data, areTracing = false)
+    XMLUtils.compareAndReport(infoset, actual)
+  }
+
   val B64Layer2Schema =
     SchemaUtils.dfdlTestSchema(
       <xs:include schemaLocation="/org/apache/daffodil/xsd/DFDLGeneralFormat.dfdl.xsd"/>
