@@ -46,8 +46,8 @@ abstract class SkipRegion(e: Term, skipLengthInBits: Int, propName: String)
     )
   }
 
-  final lazy val parser: Parser = new SkipRegionParser(skipLengthInBits, e.termRuntimeData)
-  final lazy val unparser: Unparser =
+  final lazy val parserImpl: Parser = new SkipRegionParser(skipLengthInBits, e.termRuntimeData)
+  final lazy val unparserImpl: Unparser =
     new SkipRegionUnparser(skipLengthInBits, e.termRuntimeData)
 }
 
@@ -72,8 +72,8 @@ case class AlignmentFill(e: Term) extends Terminal(e, !e.isKnownToBeAligned) {
   lazy val alignment: Integer =
     e.alignmentValueInBits // must be lazy, else guard can't "leave out" this term and then checks that are irrelevant will be done.
 
-  lazy val parser: Parser = new AlignmentFillParser(alignment, e.termRuntimeData)
-  lazy val unparser: Unparser = new AlignmentFillUnparser(alignment, e.termRuntimeData)
+  lazy val parserImpl: Parser = new AlignmentFillParser(alignment, e.termRuntimeData)
+  lazy val unparserImpl: Unparser = new AlignmentFillUnparser(alignment, e.termRuntimeData)
 }
 
 case class MandatoryTextAlignment(e: Term, alignmentInBits: Int, forDelimiter: Boolean)
@@ -88,7 +88,8 @@ case class MandatoryTextAlignment(e: Term, alignmentInBits: Int, forDelimiter: B
   ) {
   Assert.invariant(alignmentInBits > 0)
 
-  lazy val parser: Parser = new MandatoryTextAlignmentParser(alignmentInBits, e.termRuntimeData)
-  lazy val unparser: Unparser =
+  lazy val parserImpl: Parser =
+    new MandatoryTextAlignmentParser(alignmentInBits, e.termRuntimeData)
+  lazy val unparserImpl: Unparser =
     new MandatoryTextAlignmentUnparser(alignmentInBits, e.termRuntimeData)
 }

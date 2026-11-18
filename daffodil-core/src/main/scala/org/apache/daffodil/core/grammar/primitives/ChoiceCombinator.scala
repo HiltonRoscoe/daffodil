@@ -82,7 +82,7 @@ case class ChoiceCombinator(ch: ChoiceTermBase, alternatives: Seq[Gram])
   private def branchKeyAttribute = "dfdl:choiceBranchKey"
   private def branchKeyRangeAttribute = "dfdlx:choiceBranchKeyRanges"
 
-  lazy val parser: Parser = {
+  lazy val parserImpl: Parser = {
     if (!ch.isDirectDispatch) {
       val cp = new ChoiceParser(ch.termRuntimeData, parsers.toArray)
       ch.choiceLengthKind match {
@@ -280,7 +280,7 @@ case class ChoiceCombinator(ch: ChoiceTermBase, alternatives: Seq[Gram])
   private lazy val hasEventBranchUnparser: Boolean =
     eventUnparserMap.exists { case (_, branchUnparser) => !branchUnparser.isEmpty }
 
-  override lazy val unparser: Unparser = {
+  override lazy val unparserImpl: Unparser = {
     val optDefaultBranch = ch.choiceBranchMap._2
     /*
      * Since it's impossible to know the hiddenness for terms at this level (unless
@@ -343,7 +343,7 @@ case class ChoiceCombinator(ch: ChoiceTermBase, alternatives: Seq[Gram])
     }
   }
 
-  override lazy val builder: InfosetBuilder = {
+  override lazy val builderImpl: InfosetBuilder = {
     val (eventRDMap, optDefaultBranch) = ch.choiceBranchMap
 
     if (!hasEventBranchUnparser && optDefaultBranch.isEmpty) {

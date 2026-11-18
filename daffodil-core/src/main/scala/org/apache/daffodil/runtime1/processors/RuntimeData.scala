@@ -680,7 +680,7 @@ final class SimpleTypeRuntimeData(
  */
 sealed class ElementRuntimeData(
   positionArg: Int,
-  children: Seq[ElementRuntimeData],
+  childrenArg: => Seq[ElementRuntimeData],
   val variableMap: VariableMap,
   partialNextElementResolverDelay: Delay[PartialNextElementResolver],
   val encInfo: EncodingRuntimeData,
@@ -693,7 +693,7 @@ sealed class ElementRuntimeData(
   val optPrimType: Option[PrimType],
   val targetNamespace: NS,
   val optSimpleTypeRuntimeData: Option[SimpleTypeRuntimeData],
-  val optComplexTypeModelGroupRuntimeData: Option[ModelGroupRuntimeData],
+  optComplexTypeModelGroupRuntimeDataArg: => Option[ModelGroupRuntimeData],
   val minOccurs: Long,
   val maxOccurs: Long,
   val maybeOccursCountKind: Maybe[OccursCountKind],
@@ -755,7 +755,45 @@ sealed class ElementRuntimeData(
 
   override def isRequiredScalar = !isArray && isRequiredInUnparseInfoset
 
+  // By-name so a recursive element can point at its own runtime data, and at
+  // the model group that points back at it, without deadlocking construction.
+  lazy val children: Seq[ElementRuntimeData] = childrenArg
+
+  lazy val optComplexTypeModelGroupRuntimeData: Option[ModelGroupRuntimeData] =
+    optComplexTypeModelGroupRuntimeDataArg
+
   final def childERDs = children
+
+  override protected def initializeFunction(): Unit = {
+    forceStructure(new java.util.IdentityHashMap[TermRuntimeData, java.lang.Boolean]())
+    super.initializeFunction()
+  }
+
+  private def forceStructure(
+    seen: java.util.IdentityHashMap[TermRuntimeData, java.lang.Boolean]
+  ): Unit = {
+    if (!seen.containsKey(this)) {
+      seen.put(this, java.lang.Boolean.TRUE)
+      children.foreach { child =>
+        child.forceStructure(seen)
+      }
+      val modelGroup = optComplexTypeModelGroupRuntimeData
+      if (modelGroup != null) modelGroup.foreach(forceGroup(_, seen))
+    }
+  }
+
+  private def forceGroup(
+    group: ModelGroupRuntimeData,
+    seen: java.util.IdentityHashMap[TermRuntimeData, java.lang.Boolean]
+  ): Unit = {
+    if (!seen.containsKey(group)) {
+      seen.put(group, java.lang.Boolean.TRUE)
+      group.groupMembers.foreach {
+        case e: ElementRuntimeData => e.forceStructure(seen)
+        case g: ModelGroupRuntimeData => forceGroup(g, seen)
+      }
+    }
+  }
 
   def isSimpleType = optPrimType.isDefined
 

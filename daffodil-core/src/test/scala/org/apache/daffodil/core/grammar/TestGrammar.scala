@@ -38,8 +38,8 @@ class TestGrammar extends GrammarMixin {
   final override protected def grammarContext = fakeTerm
 
   case class Primitive1(e: Term, guard: Boolean = true) extends Terminal(e, guard) {
-    def parser: Parser = Assert.notYetImplemented()
-    def unparser: Unparser = Assert.notYetImplemented()
+    protected def parserImpl: Parser = Assert.notYetImplemented()
+    protected def unparserImpl: Unparser = Assert.notYetImplemented()
   }
 
   @Test def testBasicTripleSequential(): Unit = {

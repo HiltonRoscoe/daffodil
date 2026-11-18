@@ -351,3 +351,22 @@ case class NotParsableParser(context: ElementRuntimeData) extends PrimParserNoDa
   override def childProcessors = Vector()
   override val runtimeDependencies = Array()
 }
+
+/**
+ * Stands in for a parser that is still being constructed because the schema is
+ * recursive. The real parser is installed when construction of that grammar
+ * term finishes, which is before any parse runs.
+ */
+final class ForwardingParser(override val context: RuntimeData)
+  extends CombinatorParser(context) {
+  var delegate: Parser = _
+
+  override val runtimeDependencies: Array[Evaluatable[AnyRef]] = Array()
+
+  override def childProcessors =
+    if (delegate == null) Vector() else Vector(delegate)
+
+  override def parse(pstate: PState): Unit = delegate.parse1(pstate)
+
+  override def toString = "ForwardingParser"
+}

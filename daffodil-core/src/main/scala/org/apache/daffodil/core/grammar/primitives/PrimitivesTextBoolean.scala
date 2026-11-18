@@ -26,14 +26,14 @@ case class ConvertTextBooleanPrim(e: ElementBase) extends Terminal(e, true) {
 
   override def toString = "to(xs:boolean)"
 
-  override lazy val parser = new ConvertTextBooleanParser(
+  override lazy val parserImpl = new ConvertTextBooleanParser(
     e.elementRuntimeData,
     e.textBooleanTrueRepEv,
     e.textBooleanFalseRepEv,
     e.ignoreCaseBool
   )
 
-  override lazy val unparser = new ConvertTextBooleanUnparser(
+  override lazy val unparserImpl = new ConvertTextBooleanUnparser(
     e.elementRuntimeData,
     e.textBooleanTrueRepEv,
     e.textBooleanFalseRepEv

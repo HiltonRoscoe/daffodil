@@ -30,7 +30,7 @@ case class LiteralValueNilOfSpecifiedLength(e: ElementBase)
   extends Terminal(e, true)
   with Padded {
 
-  override lazy val parser = new LiteralValueNilOfSpecifiedLengthParser(
+  override lazy val parserImpl = new LiteralValueNilOfSpecifiedLengthParser(
     e.cookedNilValuesForParse,
     parsingPadChar,
     justificationTrim,
@@ -38,7 +38,7 @@ case class LiteralValueNilOfSpecifiedLength(e: ElementBase)
     e.elementRuntimeData
   )
 
-  override lazy val unparser = new LiteralValueNilOfSpecifiedLengthUnparser(
+  override lazy val unparserImpl = new LiteralValueNilOfSpecifiedLengthUnparser(
     e.elementRuntimeData,
     e.nilStringLiteralForUnparserEv,
     e.lengthKind == LengthKind.Pattern
@@ -49,7 +49,7 @@ case class LiteralCharacterNilOfSpecifiedLength(e: ElementBase)
   extends Terminal(e, true)
   with Padded {
 
-  override lazy val parser = new LiteralCharacterNilOfSpecifiedLengthParser(
+  override lazy val parserImpl = new LiteralCharacterNilOfSpecifiedLengthParser(
     e.cookedNilValuesForParse,
     parsingPadChar,
     justificationTrim,
@@ -59,7 +59,7 @@ case class LiteralCharacterNilOfSpecifiedLength(e: ElementBase)
 
   private lazy val nilLitCharacter = e.cookedNilValuesForUnparse.head(0)
 
-  override lazy val unparser: Unparser =
+  override lazy val unparserImpl: Unparser =
     new NilLiteralCharacterUnparser(
       e.erd,
       e.maybeUnparseTargetLengthInBitsEv.get,

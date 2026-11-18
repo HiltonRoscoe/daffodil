@@ -98,7 +98,7 @@ class SeqComp private (context: SchemaComponent, children: Seq[Gram])
     _.isInstanceOf[AssertExpressionEvaluationParser]
   }.toArray
 
-  final override lazy val parser = {
+  final override lazy val parserImpl = {
     if (parserChildren.isEmpty) new NadaParser(context.runtimeData)
     else if (parserChildren.length == 1) parserChildren.head
     else
@@ -121,7 +121,7 @@ class SeqComp private (context: SchemaComponent, children: Seq[Gram])
     unparsers
   }
 
-  final override lazy val unparser = {
+  final override lazy val unparserImpl = {
     if (unparserChildren.isEmpty) new NadaUnparser(context.runtimeData)
     else if (unparserChildren.length == 1) unparserChildren.head
     else new SeqCompUnparser(context.runtimeData, unparserChildren.toArray)
@@ -138,15 +138,15 @@ class SeqComp private (context: SchemaComponent, children: Seq[Gram])
       .toArray
   }
 
-  final override lazy val builder: InfosetBuilder = SeqCompInfosetBuilder(builderChildren)
+  final override lazy val builderImpl: InfosetBuilder = SeqCompInfosetBuilder(builderChildren)
 }
 
 object EmptyGram extends Gram(null) {
   override def isEmpty = true
   override def toString = "Empty"
 
-  override lazy val parser = new NadaParser(null)
-  override lazy val unparser = new NadaUnparser(null)
+  override lazy val parserImpl = new NadaParser(null)
+  override lazy val unparserImpl = new NadaUnparser(null)
 }
 
 abstract class NamedGram(context: SchemaComponent) extends Gram(context) {

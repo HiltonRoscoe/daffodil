@@ -29,8 +29,8 @@ abstract class Primitive(e: Term, guard: Boolean = false) extends Terminal(e, gu
  */
 abstract class UnimplementedPrimitive(e: Term, guard: Boolean = false)
   extends Primitive(e, guard) {
-  override final lazy val parser = hasNoParser
-  override final lazy val unparser = hasNoUnparser
+  override final lazy val parserImpl = hasNoParser
+  override final lazy val unparserImpl = hasNoUnparser
 }
 
 case class UnicodeByteOrderMark(e: Root) extends UnimplementedPrimitive(e, false)

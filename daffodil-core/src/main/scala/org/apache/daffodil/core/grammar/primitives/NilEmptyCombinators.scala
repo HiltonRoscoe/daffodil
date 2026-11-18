@@ -39,9 +39,10 @@ case class SimpleNilOrValue(ctxt: ElementBase, nilGram: Gram, valueGram: Gram)
   lazy val nilUnparser = nilGram.unparser
   lazy val valueUnparser = valueGram.unparser
 
-  override lazy val parser = SimpleNilOrValueParser(ctxt.erd, nilParser, valueParser)
+  override lazy val parserImpl = SimpleNilOrValueParser(ctxt.erd, nilParser, valueParser)
 
-  override lazy val unparser = SimpleNilOrValueUnparser(ctxt.erd, nilUnparser, valueUnparser)
+  override lazy val unparserImpl =
+    SimpleNilOrValueUnparser(ctxt.erd, nilUnparser, valueUnparser)
 
 }
 
@@ -56,13 +57,15 @@ case class ComplexNilOrContent(ctxt: ElementBase, nilGram: Gram, contentGram: Gr
   lazy val nilUnparser = nilGram.unparser
   lazy val contentUnparser = contentGram.unparser
 
-  override lazy val parser = ComplexNilOrContentParser(ctxt.erd, nilParser, contentParser)
+  override lazy val parserImpl = ComplexNilOrContentParser(ctxt.erd, nilParser, contentParser)
 
-  override lazy val unparser =
+  override lazy val unparserImpl =
     ComplexNilOrContentUnparser(ctxt.erd, nilUnparser, contentUnparser)
 
   // A nilled complex element has no children to build; nilled-ness is only
   // known once the node exists, so this needs a real runtime check, not a
   // static pass-through.
-  override lazy val builder: InfosetBuilder = NilOrContentInfosetBuilder(contentGram.builder)
+  override lazy val builderImpl: InfosetBuilder = NilOrContentInfosetBuilder(
+    contentGram.builder
+  )
 }

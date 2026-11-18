@@ -123,6 +123,20 @@ final class InfosetBuildCursor(
  * still needs an entry for. A parent that holds one recognizes it by isEmpty
  * and never builds it.
  */
+/**
+ * Stands in for a builder that is still being constructed because the schema
+ * is recursive. The real builder is installed when construction finishes.
+ */
+final class ForwardingInfosetBuilder extends InfosetBuilder {
+  var delegate: InfosetBuilder = _
+
+  override def isEmpty: Boolean = if (delegate == null) false else delegate.isEmpty
+
+  override def newFrame(): InfosetBuildFrame = delegate.newFrame()
+
+  override def toString = "ForwardingInfosetBuilder"
+}
+
 object NadaInfosetBuilder extends InfosetBuilder {
   override def isEmpty = true
 

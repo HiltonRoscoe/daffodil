@@ -25,8 +25,10 @@ import org.apache.daffodil.runtime1.infoset.InfosetBuilder
 import org.apache.daffodil.runtime1.infoset.SequenceInfosetBuilder
 import org.apache.daffodil.runtime1.processors.parsers.LayeredSequenceParser
 import org.apache.daffodil.runtime1.processors.parsers.Parser as DaffodilParser
+import org.apache.daffodil.runtime1.processors.parsers.SequenceChildParser
 import org.apache.daffodil.runtime1.processors.unparsers.Unparser as DaffodilUnparser
 import org.apache.daffodil.unparsers.runtime1.LayeredSequenceUnparser
+import org.apache.daffodil.unparsers.runtime1.SequenceChildUnparser
 
 case class LayeredSequence(sq: SequenceGroupTermBase, bodyTerm: SequenceChild)
   extends Terminal(sq, true) {
@@ -41,19 +43,21 @@ case class LayeredSequence(sq: SequenceGroupTermBase, bodyTerm: SequenceChild)
       bodyTerm.toString() +
       "</" + Misc.getNameFromClass(this) + ">"
 
-  private lazy val bodyParser = bodyTerm.parser
-  private lazy val bodyUnparser = bodyTerm.unparser
+  private lazy val bodyParser: SequenceChildParser =
+    bodyTerm.optSequenceChildParser.get
+  private lazy val bodyUnparser: SequenceChildUnparser =
+    bodyTerm.optSequenceChildUnparser.get
 
-  override lazy val parser: DaffodilParser =
+  override lazy val parserImpl: DaffodilParser =
     new LayeredSequenceParser(srd, bodyParser)
 
-  override lazy val unparser: DaffodilUnparser =
+  override lazy val unparserImpl: DaffodilUnparser =
     new LayeredSequenceUnparser(srd, bodyUnparser)
 
   // The layer transform builds no infoset events, but this is still a one-child
   // sequence position: it must push/pop bodyTerm's TRD and advance the
   // group index like any sequence child, or next-element resolution on
   // the shared InfosetInputter breaks.
-  override lazy val builder: InfosetBuilder =
+  override lazy val builderImpl: InfosetBuilder =
     SequenceInfosetBuilder(Array(bodyTerm.sequenceChildBuildInfo))
 }

@@ -48,7 +48,7 @@ abstract class SpecifiedLengthCombinatorBase(val e: ElementBase, eGramArg: => Gr
   // None of the length-kind wrapping below (explicit/implicit/prefixed
   // lengths, pattern matching) creates infoset nodes; the builder tree skips
   // straight to whatever the wrapped element content itself builds.
-  override lazy val builder: InfosetBuilder = eGram.builder
+  override lazy val builderImpl: InfosetBuilder = eGram.builder
 
   def kind: String
 
@@ -87,12 +87,12 @@ class SpecifiedLengthPattern(e: ElementBase, eGram: => Gram)
     )
   }
 
-  override lazy val parser: Parser =
+  override lazy val parserImpl: Parser =
     new SpecifiedLengthPatternParser(eParser, e.elementRuntimeData, pattern)
 
   // When unparsing, the pattern is not used to calculate a length, so just
   // skip that parser and go straight to unparsing the string in the eUnparser
-  override lazy val unparser: Unparser = {
+  override lazy val unparserImpl: Unparser = {
     pattern
     // force pattern just so we detect regex syntax errors even though
     // we don't use the pattern when unparsing.
@@ -105,7 +105,7 @@ trait SpecifiedLengthExplicitImplicitUnparserMixin {
   def e: ElementBase
   def eUnparser: Unparser
 
-  lazy val unparser: Unparser = {
+  lazy val unparserImpl: Unparser = {
     val u = eUnparser
     if (u.isEmpty) u
     else
@@ -125,7 +125,7 @@ class SpecifiedLengthExplicit(e: ElementBase, eGram: => Gram, bitsMultiplier: In
 
   lazy val kind = "Explicit_" + e.lengthUnits.toString
 
-  lazy val parser: Parser = {
+  lazy val parserImpl: Parser = {
     if (eParser.isEmpty) eParser
     else
       new SpecifiedLengthExplicitParser(
@@ -146,7 +146,7 @@ class SpecifiedLengthImplicit(e: ElementBase, eGram: => Gram, nBits: Long)
 
   lazy val toBits = 1
 
-  lazy val parser: Parser =
+  lazy val parserImpl: Parser =
     new SpecifiedLengthImplicitParser(eParser, e.elementRuntimeData, nBits)
 
 }
@@ -162,7 +162,7 @@ class SpecifiedLengthPrefixed(e: ElementBase, eGram: => Gram, bitsMultiplier: In
   private lazy val plerd = e.prefixedLengthElementDecl.elementRuntimeData
   private lazy val pladj = e.prefixedLengthAdjustmentInUnits
 
-  lazy val parser: Parser = new SpecifiedLengthPrefixedParser(
+  lazy val parserImpl: Parser = new SpecifiedLengthPrefixedParser(
     eParser,
     erd,
     e.prefixedLengthBody.parser,
@@ -171,7 +171,7 @@ class SpecifiedLengthPrefixed(e: ElementBase, eGram: => Gram, bitsMultiplier: In
     pladj
   )
 
-  lazy val unparser: Unparser = {
+  lazy val unparserImpl: Unparser = {
     if (
       e.lengthUnits == LengthUnits.Characters &&
       e.isComplexType &&
@@ -197,7 +197,7 @@ class SpecifiedLengthExplicitCharacters(e: ElementBase, eGram: => Gram)
 
   val kind = "ExplicitCharacters"
 
-  lazy val parser: Parser =
+  lazy val parserImpl: Parser =
     new SpecifiedLengthExplicitCharactersParser(eParser, e.elementRuntimeData, e.lengthEv)
 }
 
@@ -207,7 +207,7 @@ class SpecifiedLengthImplicitCharacters(e: ElementBase, eGram: => Gram, nChars: 
 
   val kind = "ImplicitCharacters"
 
-  lazy val parser: Parser =
+  lazy val parserImpl: Parser =
     new SpecifiedLengthImplicitCharactersParser(eParser, e.elementRuntimeData, nChars)
 }
 
@@ -216,7 +216,7 @@ class SpecifiedLengthPrefixedCharacters(e: ElementBase, eGram: => Gram)
 
   val kind = "ExplicitCharacters"
 
-  lazy val parser: Parser = new SpecifiedLengthPrefixedCharactersParser(
+  lazy val parserImpl: Parser = new SpecifiedLengthPrefixedCharactersParser(
     eParser,
     e.elementRuntimeData,
     e.prefixedLengthBody.parser,
@@ -224,7 +224,7 @@ class SpecifiedLengthPrefixedCharacters(e: ElementBase, eGram: => Gram)
     e.prefixedLengthAdjustmentInUnits
   )
 
-  lazy val unparser: Unparser =
+  lazy val unparserImpl: Unparser =
     e.subsetError(
       """Unparsing with dfdl:lengthKind='prefixed' and dfdl:lengthUnits='characters' and
         |a non-constant or variable-width encoding is not supported.""".stripMargin

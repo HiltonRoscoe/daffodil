@@ -26,6 +26,7 @@ import org.apache.daffodil.lib.schema.annotation.props.Found
 import org.apache.daffodil.lib.schema.annotation.props.gen.ChoiceAGMixin
 import org.apache.daffodil.lib.schema.annotation.props.gen.Choice_AnnotationMixin
 import org.apache.daffodil.lib.schema.annotation.props.gen.YesNo
+import org.apache.daffodil.lib.util.CycleGuard
 
 /**
  *
@@ -120,7 +121,12 @@ abstract class ChoiceTermBase(
     isDD
   }
 
-  final override lazy val hasKnownRequiredSyntax = LV(Symbol("hasKnownRequiredSyntax")) {
+  final override def hasKnownRequiredSyntax: Boolean =
+    CycleGuard(this, "hasKnownRequiredSyntax", false) {
+      hasKnownRequiredSyntaxValue
+    }
+
+  private lazy val hasKnownRequiredSyntaxValue: Boolean = LV(Symbol("hasKnownRequiredSyntax")) {
     if (hasFraming) true
     // else if (isKnownToBeAligned) true //TODO: Alignment may not occur; hence, cannot be part of determining whether there is known syntax.
     else {

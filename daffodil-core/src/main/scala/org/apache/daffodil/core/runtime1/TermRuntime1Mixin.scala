@@ -21,6 +21,7 @@ import org.apache.daffodil.core.dsom.*
 import org.apache.daffodil.lib.exceptions.Assert
 import org.apache.daffodil.lib.iapi.WarnID
 import org.apache.daffodil.lib.schema.annotation.props.gen.NilKind
+import org.apache.daffodil.lib.util.CycleGuard
 import org.apache.daffodil.lib.util.Logger
 import org.apache.daffodil.lib.util.Maybe
 import org.apache.daffodil.lib.xml.QNameBase
@@ -511,7 +512,12 @@ trait TermRuntime1Mixin { self: Term =>
    * For streaming unparser, determines if this Term could
    * have suspensions associated with it.
    */
-  final protected lazy val couldHaveSuspensions: Boolean = {
+  final protected def couldHaveSuspensions: Boolean =
+    CycleGuard(this, "couldHaveSuspensions", false) {
+      couldHaveSuspensionsValue
+    }
+
+  private lazy val couldHaveSuspensionsValue: Boolean = {
     val commonCouldHaveSuspensions =
       !isKnownToBeAligned || // AlignmentFillUnparser
         (if (hasDelimiters) !isDelimiterKnownToBeTextAligned else false)
@@ -572,7 +578,13 @@ trait TermRuntime1Mixin { self: Term =>
    * properties that take runtime-valued expressions - dfdl:outputNewLine is
    * one example.
    */
-  final lazy val contentLengthParserReferencedElementInfos: Set[DPathElementCompileInfo] = {
+  final def contentLengthParserReferencedElementInfos: Set[DPathElementCompileInfo] =
+    CycleGuard(this, "contentLengthParserReferencedElementInfos", Set.empty) {
+      contentLengthParserReferencedElementInfosValue
+    }
+
+  private lazy val contentLengthParserReferencedElementInfosValue
+    : Set[DPathElementCompileInfo] = {
     val propRefs = propertyContentReferencedElementInfos
     val stmtRefs = statementContentParserReferencedElementInfos
     val calcRefs = calcContentParserReferencedElementInfos
@@ -587,7 +599,13 @@ trait TermRuntime1Mixin { self: Term =>
    * Any element referenced from an expression in the scope of this term
    * is in this set.
    */
-  final lazy val contentLengthUnparserReferencedElementInfos: Set[DPathElementCompileInfo] = {
+  final def contentLengthUnparserReferencedElementInfos: Set[DPathElementCompileInfo] =
+    CycleGuard(this, "contentLengthUnparserReferencedElementInfos", Set.empty) {
+      contentLengthUnparserReferencedElementInfosValue
+    }
+
+  private lazy val contentLengthUnparserReferencedElementInfosValue
+    : Set[DPathElementCompileInfo] = {
     val propRefs = propertyContentReferencedElementInfos
     val stmtRefs = statementContentUnparserReferencedElementInfos
     val calcRefs = calcContentUnparserReferencedElementInfos
@@ -602,7 +620,13 @@ trait TermRuntime1Mixin { self: Term =>
    * Any element referenced from an expression in the scope of this term
    * is in this set.
    */
-  final lazy val valueLengthParserReferencedElementInfos: Set[DPathElementCompileInfo] = {
+  final def valueLengthParserReferencedElementInfos: Set[DPathElementCompileInfo] =
+    CycleGuard(this, "valueLengthParserReferencedElementInfos", Set.empty) {
+      valueLengthParserReferencedElementInfosValue
+    }
+
+  private lazy val valueLengthParserReferencedElementInfosValue
+    : Set[DPathElementCompileInfo] = {
     val propRefs = propertyValueReferencedElementInfos
     val stmtRefs = statementValueParserReferencedElementInfos
     val calcRefs = calcValueParserReferencedElementInfos
@@ -617,7 +641,13 @@ trait TermRuntime1Mixin { self: Term =>
    * Any element referenced from an expression in the scope of this term
    * is in this set.
    */
-  final lazy val valueLengthUnparserReferencedElementInfos: Set[DPathElementCompileInfo] = {
+  final def valueLengthUnparserReferencedElementInfos: Set[DPathElementCompileInfo] =
+    CycleGuard(this, "valueLengthUnparserReferencedElementInfos", Set.empty) {
+      valueLengthUnparserReferencedElementInfosValue
+    }
+
+  private lazy val valueLengthUnparserReferencedElementInfosValue
+    : Set[DPathElementCompileInfo] = {
     val propRefs = propertyValueReferencedElementInfos
     val stmtRefs = statementValueUnparserReferencedElementInfos
     val calcRefs = calcValueUnparserReferencedElementInfos

@@ -204,3 +204,21 @@ case class NotUnparsableUnparser(override val context: ElementRuntimeData)
   override def childProcessors = Vector()
   override val runtimeDependencies = Array()
 }
+
+/**
+ * Stands in for an unparser that is still being constructed because the schema
+ * is recursive. The real unparser is installed when construction finishes.
+ */
+final class ForwardingUnparser(override val context: RuntimeData)
+  extends CombinatorUnparser(context) {
+  var delegate: Unparser = _
+
+  override val runtimeDependencies: Array[Evaluatable[AnyRef]] = Array()
+
+  override def childProcessors =
+    if (delegate == null) Vector() else Vector(delegate)
+
+  override def unparse(ustate: UState): Unit = delegate.unparse1(ustate)
+
+  override def toString = "ForwardingUnparser"
+}

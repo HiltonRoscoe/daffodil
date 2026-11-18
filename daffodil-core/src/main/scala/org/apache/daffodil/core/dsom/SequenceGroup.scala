@@ -34,6 +34,7 @@ import org.apache.daffodil.lib.schema.annotation.props.gen.OccursCountKind
 import org.apache.daffodil.lib.schema.annotation.props.gen.SeparatorPosition
 import org.apache.daffodil.lib.schema.annotation.props.gen.SequenceKind
 import org.apache.daffodil.lib.schema.annotation.props.gen.TestKind
+import org.apache.daffodil.lib.util.CycleGuard
 import org.apache.daffodil.lib.xml.RefQName
 import org.apache.daffodil.lib.xml.XMLUtils
 import org.apache.daffodil.runtime1.layers.LayerRuntimeData
@@ -143,7 +144,12 @@ abstract class SequenceGroupTermBase(xml: Node, lexicalParent: SchemaComponent, 
       res
     }
 
-  final override lazy val hasKnownRequiredSyntax = LV(Symbol("hasKnownRequiredSyntax")) {
+  final override def hasKnownRequiredSyntax: Boolean =
+    CycleGuard(this, "hasKnownRequiredSyntax", false) {
+      hasKnownRequiredSyntaxValue
+    }
+
+  private lazy val hasKnownRequiredSyntaxValue: Boolean = LV(Symbol("hasKnownRequiredSyntax")) {
     if (hasFraming) true
     else {
       lazy val memberHasRequiredSyntax = representedMembers.exists { member =>

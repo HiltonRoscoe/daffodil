@@ -30,6 +30,7 @@ import org.apache.daffodil.lib.schema.annotation.props.SeparatorSuppressionPolic
 import org.apache.daffodil.lib.schema.annotation.props.gen.LengthKind
 import org.apache.daffodil.lib.schema.annotation.props.gen.OccursCountKind
 import org.apache.daffodil.lib.schema.annotation.props.gen.YesNo
+import org.apache.daffodil.lib.util.CycleGuard
 
 /**
  * Mixin for objects that are shared, but have consistency checks to be run
@@ -113,7 +114,12 @@ trait Term
    * (e.g. schema compilation has finished) to ensure there are no false
    * positives.
    */
-  final lazy val checkUnusedProperties: Unit = {
+  final def checkUnusedProperties: Unit =
+    CycleGuard(this, "checkUnusedProperties", ()) {
+      checkUnusedPropertiesValue
+    }
+
+  private lazy val checkUnusedPropertiesValue: Unit = {
     // Get the properties defined on this term and what it refers to
     val localProps = formatAnnotation.justThisOneProperties
     val refProps = optReferredToComponent
@@ -515,7 +521,14 @@ trait Term
    * but they must be in the non-default branch of a choice, or a child to an optional
    * complex type or non-required array.
    */
-  lazy val canUnparseIfNoEvents: Boolean = {
+  def canUnparseIfNoEvents: Boolean =
+    // Re-entering a term means its own answer is still being computed from
+    // its children. A required recursive element still needs an event.
+    CycleGuard(this, "canUnparseIfNoEvents", false) {
+      canUnparseIfNoEventsValue
+    }
+
+  private lazy val canUnparseIfNoEventsValue: Boolean = {
     val res = this match {
       case s: SequenceTermBase => {
         s.groupMembers.forall { member =>

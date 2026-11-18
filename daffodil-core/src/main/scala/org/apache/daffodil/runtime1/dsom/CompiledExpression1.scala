@@ -396,13 +396,44 @@ class DPathElementCompileInfo(
   override def initialize(): Unit = init_
 
   override def serializeParents(oos: java.io.ObjectOutputStream): Unit = {
-    super.serializeParents(oos)
-    elementChildrenCompileInfo.foreach { _.serializeParents(oos) }
+    serializeParents(
+      oos,
+      new java.util.IdentityHashMap[DPathElementCompileInfo, java.lang.Boolean]()
+    )
+  }
+
+  /**
+   * Element children can be a cycle when an element refers to itself. The
+   * parent sequences are written once per compile info; a later visit is the
+   * same object and has nothing new to write.
+   */
+  private def serializeParents(
+    oos: java.io.ObjectOutputStream,
+    seen: java.util.IdentityHashMap[DPathElementCompileInfo, java.lang.Boolean]
+  ): Unit = {
+    if (!seen.containsKey(this)) {
+      seen.put(this, java.lang.Boolean.TRUE)
+      super.serializeParents(oos)
+      elementChildrenCompileInfo.foreach { _.serializeParents(oos, seen) }
+    }
   }
 
   override def deserializeParents(ois: java.io.ObjectInputStream): Unit = {
-    super.deserializeParents(ois)
-    elementChildrenCompileInfo.foreach { _.deserializeParents(ois) }
+    deserializeParents(
+      ois,
+      new java.util.IdentityHashMap[DPathElementCompileInfo, java.lang.Boolean]()
+    )
+  }
+
+  private def deserializeParents(
+    ois: java.io.ObjectInputStream,
+    seen: java.util.IdentityHashMap[DPathElementCompileInfo, java.lang.Boolean]
+  ): Unit = {
+    if (!seen.containsKey(this)) {
+      seen.put(this, java.lang.Boolean.TRUE)
+      super.deserializeParents(ois)
+      elementChildrenCompileInfo.foreach { _.deserializeParents(ois, seen) }
+    }
   }
 
   lazy val elementChildrenCompileInfo = elementChildrenCompileInfoDelay.value

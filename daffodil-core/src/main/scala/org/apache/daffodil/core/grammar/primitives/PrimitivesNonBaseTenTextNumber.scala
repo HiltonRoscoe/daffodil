@@ -26,9 +26,9 @@ import org.apache.daffodil.unparsers.runtime1.ConvertNonBaseTenTextNumberUnparse
 
 case class ConvertNonBaseTenTextNumberPrim(e: ElementBase) extends Terminal(e, true) {
 
-  override lazy val parser: Parser =
+  override lazy val parserImpl: Parser =
     new ConvertNonBaseTenTextNumberParser(e.elementRuntimeData, e.textStandardBaseDefaulted)
 
-  override lazy val unparser: Unparser =
+  override lazy val unparserImpl: Unparser =
     new ConvertNonBaseTenTextNumberUnparser(e.elementRuntimeData, e.textStandardBaseDefaulted)
 }

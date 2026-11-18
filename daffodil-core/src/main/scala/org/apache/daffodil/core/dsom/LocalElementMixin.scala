@@ -23,6 +23,7 @@ import org.apache.daffodil.core.grammar.LocalElementGrammarMixin
 import org.apache.daffodil.lib.equality.*
 import org.apache.daffodil.lib.exceptions.Assert
 import org.apache.daffodil.lib.schema.annotation.props.gen.*
+import org.apache.daffodil.lib.util.CycleGuard
 import org.apache.daffodil.runtime1.dpath.NodeInfo.PrimType
 
 /**
@@ -78,7 +79,12 @@ trait LocalElementMixin extends ParticleMixin with LocalElementGrammarMixin {
 
   final override def hasKnownRequiredSyntax: Boolean = !couldBeMissing
 
-  final lazy val couldBeMissing: Boolean = LV(Symbol("couldBeMissing")) {
+  final def couldBeMissing: Boolean =
+    CycleGuard(this, "couldBeMissing", true) {
+      couldBeMissingValue
+    }
+
+  private lazy val couldBeMissingValue: Boolean = LV(Symbol("couldBeMissing")) {
     val res =
       if (minOccurs == 0) true
       else if (isNillable && !hasNilValueRequiredSyntax) true

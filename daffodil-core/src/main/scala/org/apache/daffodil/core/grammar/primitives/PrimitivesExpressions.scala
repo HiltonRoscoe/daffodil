@@ -109,10 +109,10 @@ abstract class AssertBase(
     }
   }
 
-  lazy val parser: DaffodilParser =
+  lazy val parserImpl: DaffodilParser =
     new AssertExpressionEvaluationParser(msgExpr, discrim, decl.runtimeData, expr, failureType)
 
-  override def unparser: DaffodilUnparser = hasNoUnparser
+  override def unparserImpl: DaffodilUnparser = hasNoUnparser
 
 }
 
@@ -144,7 +144,7 @@ case class InitiatedContent(mg: ModelGroup, t: Term) extends Terminal(t, true) {
 
   override val forWhat = ForParser
 
-  override def parser = {
+  override def parserImpl = {
     // Each of the parsers that this could create always appear immediately
     // after an initiator parser. So they can all assume that the previous
     // initiator was successfully parsed and thus resolve points of uncertainty
@@ -188,7 +188,7 @@ case class InitiatedContent(mg: ModelGroup, t: Term) extends Terminal(t, true) {
     }
   }
 
-  override def unparser = hasNoUnparser
+  override def unparserImpl = hasNoUnparser
 }
 
 case class SetVariable(stmt: DFDLSetVariable, override val term: Term)
@@ -203,14 +203,14 @@ case class SetVariable(stmt: DFDLSetVariable, override val term: Term)
 
   override lazy val nodeKind = stmt.defv.primType
 
-  lazy val parser: DaffodilParser = {
+  lazy val parserImpl: DaffodilParser = {
     if (stmt.defv.runtimeData.direction == VariableDirection.UnparseOnly)
       new NadaParser(stmt.defv.runtimeData)
     else
       new SetVariableParser(expr, stmt.defv.runtimeData, term.termRuntimeData)
   }
 
-  override lazy val unparser: DaffodilUnparser = {
+  override lazy val unparserImpl: DaffodilUnparser = {
     if (stmt.defv.runtimeData.direction == VariableDirection.ParseOnly)
       new NadaUnparser(stmt.defv.runtimeData)
     else
@@ -229,14 +229,14 @@ case class NewVariableInstanceStart(
   override val term: Term
 ) extends NewVariableInstanceBase(decl, stmt) {
 
-  lazy val parser: DaffodilParser = {
+  lazy val parserImpl: DaffodilParser = {
     if (stmt.defv.runtimeData.direction == VariableDirection.UnparseOnly)
       new NadaParser(stmt.variableRuntimeData)
     else
       new NewVariableInstanceStartParser(stmt.variableRuntimeData, term.termRuntimeData)
   }
 
-  override lazy val unparser: DaffodilUnparser = {
+  override lazy val unparserImpl: DaffodilUnparser = {
     if (stmt.defv.runtimeData.direction == VariableDirection.ParseOnly)
       new NadaUnparser(stmt.variableRuntimeData)
     else
@@ -250,14 +250,14 @@ case class NewVariableInstanceEnd(
   override val term: Term
 ) extends NewVariableInstanceBase(decl, stmt) {
 
-  lazy val parser: DaffodilParser = {
+  lazy val parserImpl: DaffodilParser = {
     if (stmt.defv.runtimeData.direction == VariableDirection.UnparseOnly)
       new NadaParser(stmt.variableRuntimeData)
     else
       new NewVariableInstanceEndParser(stmt.variableRuntimeData, term.termRuntimeData)
   }
 
-  override lazy val unparser: DaffodilUnparser = {
+  override lazy val unparserImpl: DaffodilUnparser = {
     if (stmt.defv.runtimeData.direction == VariableDirection.ParseOnly)
       new NadaUnparser(stmt.variableRuntimeData)
     else
@@ -327,11 +327,12 @@ case class InputValueCalc(e: ElementBase, property: PropertyLookupResult)
 
   override def baseName = "inputValueCalc"
 
-  override lazy val parser: DaffodilParser = {
+  override lazy val parserImpl: DaffodilParser = {
     new IVCParser(expr, e.elementRuntimeData)
   }
 
-  override lazy val unparser = Assert.usageError("Not to be called on InputValueCalc class.")
+  override lazy val unparserImpl =
+    Assert.usageError("Not to be called on InputValueCalc class.")
 }
 
 abstract class AssertPatternPrimBase(decl: Term, stmt: DFDLAssertionBase, discrim: Boolean)
@@ -361,7 +362,7 @@ abstract class AssertPatternPrimBase(decl: Term, stmt: DFDLAssertionBase, discri
 
   override val forWhat = ForParser
 
-  lazy val parser: DaffodilParser = new AssertPatternParser(
+  lazy val parserImpl: DaffodilParser = new AssertPatternParser(
     decl.termRuntimeData,
     discrim,
     testPattern,
@@ -369,7 +370,7 @@ abstract class AssertPatternPrimBase(decl: Term, stmt: DFDLAssertionBase, discri
     stmt.failureType
   )
 
-  override def unparser: DaffodilUnparser =
+  override def unparserImpl: DaffodilUnparser =
     Assert.invariantFailed("should not request unparser for asserts/discriminators")
 }
 

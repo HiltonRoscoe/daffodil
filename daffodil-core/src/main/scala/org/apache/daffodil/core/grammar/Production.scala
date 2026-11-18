@@ -81,7 +81,7 @@ final class Prod(
 
   final override lazy val isEmpty = if (!guard) true else gram.isEmpty
 
-  final override lazy val parser = {
+  final override lazy val parserImpl = {
     (forWhat, gram.forWhat) match {
       case (ForUnparser, _) =>
         new NadaParser(context.runtimeData) // TODO: detect this and remove from final parser
@@ -90,7 +90,7 @@ final class Prod(
     }
   }
 
-  final override lazy val unparser = {
+  final override lazy val unparserImpl = {
     val unp =
       if (gram.isEmpty) {
         EmptyGram.unparser
@@ -110,7 +110,7 @@ final class Prod(
       unp
   }
 
-  final override lazy val builder: InfosetBuilder = {
+  final override lazy val builderImpl: InfosetBuilder = {
     if (gram.isEmpty) {
       NadaInfosetBuilder
     } else {

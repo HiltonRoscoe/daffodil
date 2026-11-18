@@ -219,7 +219,7 @@ abstract class ConvertTextCalendarPrimBase(e: ElementBase, guard: Boolean)
     ev
   }
 
-  override lazy val parser = new ConvertTextCalendarParser(
+  override lazy val parserImpl = new ConvertTextCalendarParser(
     e.elementRuntimeData,
     xsdType,
     prettyType,
@@ -229,7 +229,7 @@ abstract class ConvertTextCalendarPrimBase(e: ElementBase, guard: Boolean)
     dateTimeFormatterEv
   )
 
-  override lazy val unparser =
+  override lazy val unparserImpl =
     new ConvertTextCalendarUnparser(
       e.elementRuntimeData,
       pattern,
@@ -318,7 +318,7 @@ case class ConvertBinaryDateTimeSecMilliPrim(e: ElementBase, lengthInBits: Long)
     cal
   }
 
-  override lazy val parser = new ConvertBinaryCalendarSecMilliParser(
+  override lazy val parserImpl = new ConvertBinaryCalendarSecMilliParser(
     e.elementRuntimeData,
     !epochCalendar.getTimeZone.equals(TimeZone.UNKNOWN_ZONE),
     e.binaryCalendarRep,
@@ -326,7 +326,7 @@ case class ConvertBinaryDateTimeSecMilliPrim(e: ElementBase, lengthInBits: Long)
     lengthInBits.toInt
   )
 
-  override lazy val unparser =
+  override lazy val unparserImpl =
     new ConvertBinaryCalendarSecMilliUnparser(
       e.elementRuntimeData,
       e.binaryCalendarRep,

@@ -95,20 +95,20 @@ abstract class SequenceChild(protected val sq: SequenceTermBase, child: Term, gr
   protected lazy val childUnparser = child.termContentBody.unparser
   protected lazy val childBuilder: InfosetBuilder = child.termContentBody.builder
 
-  final override lazy val parser = sequenceChildParser
-  final override lazy val unparser = sequenceChildUnparser
+  final override lazy val parserImpl = sequenceChildParser
+  final override lazy val unparserImpl = sequenceChildUnparser
 
   protected def sequenceChildParser: SequenceChildParser
   protected def sequenceChildUnparser: SequenceChildUnparser
 
   final lazy val optSequenceChildParser: Option[SequenceChildParser] =
-    if (childParser.isEmpty) None else Some(parser)
+    if (childParser.isEmpty) None else Some(sequenceChildParser)
 
   final lazy val optSequenceChildUnparser: Option[SequenceChildUnparser] =
-    if (childUnparser.isEmpty) None else Some(unparser)
+    if (childUnparser.isEmpty) None else Some(sequenceChildUnparser)
 
   final lazy val sequenceChildBuildInfo: SequenceChildInfosetBuildInfo =
-    SequenceChildInfosetBuildInfo(unparser, childBuilder)
+    SequenceChildInfosetBuildInfo(sequenceChildUnparser, childBuilder)
 
   /**
    * There's only parse result helpers here, so let's abbreviate

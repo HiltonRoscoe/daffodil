@@ -30,11 +30,11 @@ import org.apache.daffodil.unparsers.runtime1.HiddenGroupCombinatorUnparser
 final class HiddenGroupCombinator(ctxt: ModelGroup, body: Gram)
   extends Terminal(ctxt, !body.isEmpty) {
 
-  lazy val parser: Parser =
+  lazy val parserImpl: Parser =
     new HiddenGroupCombinatorParser(ctxt.modelGroupRuntimeData, body.parser)
 
-  override lazy val unparser: Unparser =
+  override lazy val unparserImpl: Unparser =
     new HiddenGroupCombinatorUnparser(ctxt.modelGroupRuntimeData, body.unparser)
 
-  override lazy val builder: InfosetBuilder = HiddenGroupInfosetBuilder(body.builder)
+  override lazy val builderImpl: InfosetBuilder = HiddenGroupInfosetBuilder(body.builder)
 }
