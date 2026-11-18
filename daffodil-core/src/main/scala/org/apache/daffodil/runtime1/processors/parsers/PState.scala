@@ -273,7 +273,9 @@ final class PState private (
 
   private def discard(m: PState.Mark): Unit = {
     m.element.infosetWalkerBlockCount -= 1
-    dataInputStream.discard(m.disMark)
+    // A layer replaces dataInputStream. The mark belongs to the stream that
+    // created it, which may be outside the layer now in scope.
+    m.markedInputStream.discard(m.disMark)
     m.clear()
     markPool.returnToPool(m)
   }
@@ -445,7 +447,7 @@ final class PState private (
     try {
       pou.restoreInto(this)
     } finally {
-      pou.disMark = dataInputStream.mark(pou.poolDebugLabel)
+      pou.disMark = pou.markedInputStream.mark(pou.poolDebugLabel)
     }
   }
 
@@ -637,6 +639,7 @@ object PState {
     var element: DIElement = _
     var elementLastChild: Maybe[DIElement] = _
     var disMark: DataInputStream.Mark = _
+    var markedInputStream: InputSourceDataInputStream = _
     var variableMap: VariableMap = _
     var processorStatus: ProcessorResult = _
     var validationStatus: Boolean = _
@@ -652,6 +655,7 @@ object PState {
       simpleElementState.clear()
       complexElementState.clear()
       disMark = null
+      markedInputStream = null
       variableMap = null
       processorStatus = null
       validationStatus = true
@@ -669,7 +673,8 @@ object PState {
         simpleElementState.captureFrom(element)
       else
         complexElementState.captureFrom(element)
-      this.disMark = ps.dataInputStream.mark(requestorID)
+      this.markedInputStream = ps.dataInputStream
+      this.disMark = this.markedInputStream.mark(requestorID)
       this.processorStatus = ps.processorStatus
       this.validationStatus = ps.validationStatus
       this.diagnostics = ps.diagnostics
@@ -697,7 +702,10 @@ object PState {
     def restoreInto(ps: PState): Unit = {
       restoreInfoset(ps)
       ps.infosetLastChild = this.elementLastChild
-      ps.dataInputStream.reset(this.disMark)
+      this.markedInputStream.reset(this.disMark)
+      if (ps.dataInputStream ne this.markedInputStream) {
+        ps.dataInputStream = this.markedInputStream
+      }
       ps.setVariableMap(this.variableMap)
       ps._processorStatus = this.processorStatus
       ps._validationStatus = this.validationStatus
