@@ -40,10 +40,10 @@ import org.apache.daffodil.unparsers.runtime1.ConvertZonedNumberUnparser
 case class ConvertZonedCombinator(e: ElementBase, value: Gram, converter: Gram)
   extends Terminal(e, !(value.isEmpty || converter.isEmpty)) {
 
-  override lazy val parser =
+  override lazy val parserImpl =
     new ConvertZonedCombinatorParser(e.termRuntimeData, value.parser, converter.parser)
 
-  override lazy val unparser =
+  override lazy val unparserImpl =
     new ConvertZonedCombinatorUnparser(e.termRuntimeData, value.unparser, converter.unparser)
 }
 
@@ -197,7 +197,7 @@ case class ConvertZonedNumberPrim(e: ElementBase)
       OverpunchLocation.None
   }
 
-  lazy val parser: Parser =
+  lazy val parserImpl: Parser =
     new ConvertZonedNumberParser(
       opl,
       textNumberFormatEv,
@@ -206,7 +206,7 @@ case class ConvertZonedNumberPrim(e: ElementBase)
       textDecimalVirtualPoint
     )
 
-  override lazy val unparser: Unparser =
+  override lazy val unparserImpl: Unparser =
     new ConvertZonedNumberUnparser(
       opl,
       e.optTextZonedSignStyle,

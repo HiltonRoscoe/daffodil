@@ -42,13 +42,13 @@ import org.apache.daffodil.unparsers.runtime1.BinaryIntegerRuntimeLengthUnparser
 
 class BinaryIntegerRuntimeLength(val e: ElementBase) extends Terminal(e, true) {
 
-  override lazy val parser = new BinaryIntegerRuntimeLengthParser(
+  override lazy val parserImpl = new BinaryIntegerRuntimeLengthParser(
     e.elementRuntimeData,
     e.lengthEv,
     e.lengthUnits
   )
 
-  override lazy val unparser: Unparser = new BinaryIntegerRuntimeLengthUnparser(
+  override lazy val unparserImpl: Unparser = new BinaryIntegerRuntimeLengthUnparser(
     e.elementRuntimeData,
     e.lengthEv,
     e.lengthUnits
@@ -58,11 +58,11 @@ class BinaryIntegerRuntimeLength(val e: ElementBase) extends Terminal(e, true) {
 class BinaryIntegerKnownLength(val e: ElementBase, val lengthInBits: Long)
   extends Terminal(e, true) {
 
-  override lazy val parser = {
+  override lazy val parserImpl = {
     new BinaryIntegerKnownLengthParser(e.elementRuntimeData, lengthInBits.toInt)
   }
 
-  override lazy val unparser: Unparser =
+  override lazy val unparserImpl: Unparser =
     new BinaryIntegerKnownLengthUnparser(e.elementRuntimeData, lengthInBits.toInt)
 }
 
@@ -70,10 +70,10 @@ class BinaryIntegerPrefixedLength(val e: ElementBase) extends Terminal(e, true) 
 
   private lazy val erd = e.elementRuntimeData
 
-  override lazy val parser =
+  override lazy val parserImpl =
     new BinaryIntegerBitLimitLengthParser(erd)
 
-  override lazy val unparser: Unparser = {
+  override lazy val unparserImpl: Unparser = {
     val maybeNBits = e.primType match {
       case NodeInfo.Long | NodeInfo.UnsignedLong => MaybeInt(64)
       case NodeInfo.Int | NodeInfo.UnsignedInt => MaybeInt(32)
@@ -89,7 +89,7 @@ class BinaryIntegerPrefixedLength(val e: ElementBase) extends Terminal(e, true) 
 
 class BinaryDecimalRuntimeLength(val e: ElementBase) extends Terminal(e, true) {
 
-  override lazy val parser = new BinaryDecimalRuntimeLengthParser(
+  override lazy val parserImpl = new BinaryDecimalRuntimeLengthParser(
     e.elementRuntimeData,
     e.decimalSigned,
     e.binaryDecimalVirtualPoint,
@@ -97,7 +97,7 @@ class BinaryDecimalRuntimeLength(val e: ElementBase) extends Terminal(e, true) {
     e.lengthUnits
   )
 
-  override lazy val unparser: Unparser = new BinaryDecimalRuntimeLengthUnparser(
+  override lazy val unparserImpl: Unparser = new BinaryDecimalRuntimeLengthUnparser(
     e.elementRuntimeData,
     e.decimalSigned,
     e.binaryDecimalVirtualPoint,
@@ -110,14 +110,14 @@ class BinaryDecimalRuntimeLength(val e: ElementBase) extends Terminal(e, true) {
 class BinaryDecimalKnownLength(val e: ElementBase, lengthInBits: Long)
   extends Terminal(e, true) {
 
-  override lazy val parser = new BinaryDecimalKnownLengthParser(
+  override lazy val parserImpl = new BinaryDecimalKnownLengthParser(
     e.elementRuntimeData,
     e.decimalSigned,
     e.binaryDecimalVirtualPoint,
     lengthInBits.toInt
   )
 
-  override lazy val unparser: Unparser = new BinaryDecimalKnownLengthUnparser(
+  override lazy val unparserImpl: Unparser = new BinaryDecimalKnownLengthUnparser(
     e.elementRuntimeData,
     e.decimalSigned,
     e.binaryDecimalVirtualPoint,
@@ -127,14 +127,14 @@ class BinaryDecimalKnownLength(val e: ElementBase, lengthInBits: Long)
 
 class BinaryDecimalPrefixedLength(val e: ElementBase) extends Terminal(e, true) {
 
-  override lazy val parser =
+  override lazy val parserImpl =
     new BinaryDecimalBitLimitLengthParser(
       e.elementRuntimeData,
       e.decimalSigned,
       e.binaryDecimalVirtualPoint
     )
 
-  override lazy val unparser: Unparser =
+  override lazy val unparserImpl: Unparser =
     new BinaryDecimalMinimumLengthUnparser(
       e.elementRuntimeData,
       e.decimalSigned,
@@ -145,14 +145,14 @@ class BinaryDecimalPrefixedLength(val e: ElementBase) extends Terminal(e, true) 
 
 class BinaryFloat(val e: ElementBase) extends Terminal(e, true) {
 
-  override lazy val parser = new BinaryFloatParser(e.elementRuntimeData)
+  override lazy val parserImpl = new BinaryFloatParser(e.elementRuntimeData)
 
-  override lazy val unparser: Unparser = new BinaryFloatUnparser(e.elementRuntimeData)
+  override lazy val unparserImpl: Unparser = new BinaryFloatUnparser(e.elementRuntimeData)
 }
 
 class BinaryDouble(val e: ElementBase) extends Terminal(e, true) {
 
-  override lazy val parser = new BinaryDoubleParser(e.elementRuntimeData)
+  override lazy val parserImpl = new BinaryDoubleParser(e.elementRuntimeData)
 
-  override lazy val unparser: Unparser = new BinaryDoubleUnparser(e.elementRuntimeData)
+  override lazy val unparserImpl: Unparser = new BinaryDoubleUnparser(e.elementRuntimeData)
 }

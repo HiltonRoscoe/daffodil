@@ -27,6 +27,7 @@ import org.apache.daffodil.lib.exceptions.Assert
 import org.apache.daffodil.lib.iapi.WarnID
 import org.apache.daffodil.lib.schema.annotation.props.*
 import org.apache.daffodil.lib.schema.annotation.props.gen.*
+import org.apache.daffodil.lib.util.CycleGuard
 import org.apache.daffodil.lib.util.MaybeULong
 import org.apache.daffodil.lib.util.Misc
 import org.apache.daffodil.lib.xml.*
@@ -209,7 +210,12 @@ trait ElementBase
     }
   }
 
-  private lazy val thisElementsRequiredNamespaceBindings: Set[(String, NS)] =
+  private def thisElementsRequiredNamespaceBindings: Set[(String, NS)] =
+    CycleGuard(this, "thisElementsRequiredNamespaceBindings", Set.empty[(String, NS)]) {
+      thisElementsRequiredNamespaceBindingsValue
+    }
+
+  private lazy val thisElementsRequiredNamespaceBindingsValue: Set[(String, NS)] =
     LV(Symbol("thisElementsRequiredNamespaceBindings")) {
       val childrenRequiredNSBindings =
         this.elementChildren.flatMap { _.thisElementsRequiredNamespaceBindings }.toSet
@@ -1338,29 +1344,50 @@ trait ElementBase
     context: Option[ElementBase],
     policy: ParseUnparsePolicy
   ): Unit = {
-    elementChildren.foreach { child =>
-      val childPolicy = child.defaultParseUnparsePolicy
-      val isCompatible = policy == childPolicy || childPolicy == ParseUnparsePolicy.Both
-      if (!isCompatible) {
-        if (context.isDefined) {
-          context.get.SDE(
-            "Child element '%s' with dfdlx:parseUnparsePolicy='%s' is not compatible with root elements dfdlx:parseUnparsePolicy='%s'",
-            child,
-            childPolicy,
-            policy
-          )
-        } else {
-          SDE(
-            "Element '%s' with dfdlx:parseUnparsePolicy='%s' is not compatible with user supplied dfdlx:parseUnparsePolicy='%s'",
-            child,
-            childPolicy,
-            policy
-          )
-        }
-      }
+    checkParseUnparsePolicyCompatibility(
+      context,
+      policy,
+      new java.util.IdentityHashMap[ElementBase, java.lang.Boolean]()
+    )
+  }
 
-      // recursively check children
-      child.checkParseUnparsePolicyCompatibility(context, policy)
+  private def checkParseUnparsePolicyCompatibility(
+    context: Option[ElementBase],
+    policy: ParseUnparsePolicy,
+    seen: java.util.IdentityHashMap[ElementBase, java.lang.Boolean]
+  ): Unit = {
+    elementChildren.foreach { child =>
+      if (!seen.containsKey(child)) {
+        seen.put(child, java.lang.Boolean.TRUE)
+        checkOneParseUnparsePolicy(context, policy, child)
+        child.checkParseUnparsePolicyCompatibility(context, policy, seen)
+      }
+    }
+  }
+
+  private def checkOneParseUnparsePolicy(
+    context: Option[ElementBase],
+    policy: ParseUnparsePolicy,
+    child: ElementBase
+  ): Unit = {
+    val childPolicy = child.defaultParseUnparsePolicy
+    val isCompatible = policy == childPolicy || childPolicy == ParseUnparsePolicy.Both
+    if (!isCompatible) {
+      if (context.isDefined) {
+        context.get.SDE(
+          "Child element '%s' with dfdlx:parseUnparsePolicy='%s' is not compatible with root elements dfdlx:parseUnparsePolicy='%s'",
+          child,
+          childPolicy,
+          policy
+        )
+      } else {
+        SDE(
+          "Element '%s' with dfdlx:parseUnparsePolicy='%s' is not compatible with user supplied dfdlx:parseUnparsePolicy='%s'",
+          child,
+          childPolicy,
+          policy
+        )
+      }
     }
   }
 

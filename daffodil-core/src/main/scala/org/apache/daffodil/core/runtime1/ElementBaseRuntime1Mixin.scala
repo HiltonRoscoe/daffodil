@@ -20,7 +20,6 @@ package org.apache.daffodil.core.runtime1
 import org.apache.daffodil.core.dsom.ComplexTypeBase
 import org.apache.daffodil.core.dsom.ElementBase
 import org.apache.daffodil.core.dsom.PrefixLengthQuasiElementDecl
-import org.apache.daffodil.core.dsom.PrimitiveType
 import org.apache.daffodil.core.dsom.Root
 import org.apache.daffodil.core.dsom.SimpleTypeDefBase
 import org.apache.daffodil.lib.schema.annotation.props.gen.LengthKind
@@ -29,7 +28,9 @@ import org.apache.daffodil.lib.util.Delay
 import org.apache.daffodil.lib.util.Maybe
 import org.apache.daffodil.runtime1.dsom.DPathElementCompileInfo
 import org.apache.daffodil.runtime1.processors.ElementRuntimeData
+import org.apache.daffodil.runtime1.processors.ModelGroupRuntimeData
 import org.apache.daffodil.runtime1.processors.RuntimeData
+import org.apache.daffodil.runtime1.processors.SimpleTypeRuntimeData
 import org.apache.daffodil.runtime1.processors.TermRuntimeData
 
 trait ElementBaseRuntime1Mixin { self: ElementBase =>
@@ -177,11 +178,8 @@ trait ElementBaseRuntime1Mixin { self: ElementBase =>
 
   final def erd = elementRuntimeData // just an abbreviation
 
-  private lazy val childrenERDs: Seq[ElementRuntimeData] = LV(Symbol("childrenERDs")) {
-    elementChildren.map {
-      _.elementRuntimeData
-    }
-  }.value
+  private def childrenERDs: Seq[ElementRuntimeData] =
+    elementChildren.map(_.elementRuntimeData)
 
   final lazy val elementRuntimeData: ElementRuntimeData = LV(Symbol("elementRuntimeData")) {
     val newERD: ElementRuntimeData = new ElementRuntimeData(
@@ -233,12 +231,19 @@ trait ElementBaseRuntime1Mixin { self: ElementBase =>
     newERD
   }.value
 
-  private lazy val (optSimpleTypeRuntimeData, optComplexTypeModelGroupRuntimeData) =
+  // Kept separate so asking for the simple-type runtime data does not also
+  // construct the complex type's model group. That group refers back to this
+  // element when the schema is recursive.
+  private def optSimpleTypeRuntimeData: Option[SimpleTypeRuntimeData] =
     typeDef match {
-      case _: PrimitiveType => (None, None)
-      case ctb: ComplexTypeBase => (None, Some(ctb.modelGroup.modelGroupRuntimeData))
-      case s: SimpleTypeDefBase =>
-        (Some(s.simpleTypeRuntimeData), None)
+      case s: SimpleTypeDefBase => Some(s.simpleTypeRuntimeData)
+      case _ => None
+    }
+
+  private def optComplexTypeModelGroupRuntimeData: Option[ModelGroupRuntimeData] =
+    typeDef match {
+      case ctb: ComplexTypeBase => Some(ctb.modelGroup.modelGroupRuntimeData)
+      case _ => None
     }
 
 }

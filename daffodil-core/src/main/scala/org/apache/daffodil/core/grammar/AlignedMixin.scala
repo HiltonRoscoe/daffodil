@@ -31,6 +31,7 @@ import org.apache.daffodil.lib.schema.annotation.props.gen.LengthKind.Prefixed
 import org.apache.daffodil.lib.schema.annotation.props.gen.LengthUnits
 import org.apache.daffodil.lib.schema.annotation.props.gen.Representation
 import org.apache.daffodil.lib.schema.annotation.props.gen.SeparatorPosition
+import org.apache.daffodil.lib.util.CycleGuard
 import org.apache.daffodil.lib.util.Math
 
 case class AlignmentMultipleOf(nBits: Long) {
@@ -363,7 +364,15 @@ trait AlignedMixin extends GrammarMixin { self: Term =>
    * Accounts for the start of the content start alignment and element length.
    * This is used to determine the alignment before the terminator and trailing skip
    */
-  protected lazy val contentEndAlignment: AlignmentMultipleOf = {
+  protected def contentEndAlignment: AlignmentMultipleOf =
+    // A recursive element refers to a group that contains that element.
+    // Re-entering this approximation cannot improve it, so report 1-bit
+    // alignment, which keeps later decisions conservative.
+    CycleGuard(this, "contentEndAlignment", AlignmentMultipleOf(1)) {
+      contentEndAlignmentValue
+    }
+
+  private lazy val contentEndAlignmentValue: AlignmentMultipleOf = {
     this match {
       case eb: ElementBase => {
         val res = if (eb.isComplexType && eb.lengthKind == LengthKind.Implicit) {
@@ -416,7 +425,12 @@ trait AlignedMixin extends GrammarMixin { self: Term =>
    *
    * The postfix separator MTA/length needs to be added after the trailing skip
    */
-  protected lazy val endingAlignmentWithRightFramingApprox: AlignmentMultipleOf = {
+  protected def endingAlignmentWithRightFramingApprox: AlignmentMultipleOf =
+    CycleGuard(this, "endingAlignmentWithRightFramingApprox", AlignmentMultipleOf(1)) {
+      endingAlignmentWithRightFramingApproxValue
+    }
+
+  private lazy val endingAlignmentWithRightFramingApproxValue: AlignmentMultipleOf = {
     val endingAlignmentApprox = this.contentEndAlignment
       + terminatorMTAApprox
       + terminatorLengthApprox
@@ -478,7 +492,12 @@ trait AlignedMixin extends GrammarMixin { self: Term =>
     }
   }
 
-  protected lazy val isKnownToBeByteAlignedAndByteLength: Boolean = {
+  protected def isKnownToBeByteAlignedAndByteLength: Boolean =
+    CycleGuard(this, "isKnownToBeByteAlignedAndByteLength", false) {
+      isKnownToBeByteAlignedAndByteLengthValue
+    }
+
+  private lazy val isKnownToBeByteAlignedAndByteLengthValue: Boolean = {
     if (isRepresented) {
       val isByteAligned = alignmentValueInBits == 8
       val isSkipRegionByteLength = (leadingSkipInBits % 8 == 0) && (trailingSkipInBits % 8 == 0)

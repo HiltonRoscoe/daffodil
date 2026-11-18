@@ -76,7 +76,7 @@ class OrderedSequence(sq: SequenceTermBase, sequenceChildrenArg: Seq[SequenceChi
 
   lazy val sequenceChildren = sequenceChildrenArg.toArray
 
-  override lazy val parser: Parser = sq.hasSeparator match {
+  override lazy val parserImpl: Parser = sq.hasSeparator match {
     case true =>
       new OrderedSeparatedSequenceParser(
         srd,
@@ -90,7 +90,7 @@ class OrderedSequence(sq: SequenceTermBase, sequenceChildrenArg: Seq[SequenceChi
         sequenceChildren.flatMap { _.optSequenceChildParser }
       )
   }
-  override lazy val unparser: Unparser = {
+  override lazy val unparserImpl: Unparser = {
     sq match {
       case sgr: SequenceGroupRef if sgr.isHidden =>
         /*
@@ -128,7 +128,7 @@ class OrderedSequence(sq: SequenceTermBase, sequenceChildrenArg: Seq[SequenceChi
     }
   }
 
-  override lazy val builder: InfosetBuilder =
+  override lazy val builderImpl: InfosetBuilder =
     SequenceInfosetBuilder(sequenceChildren.map { _.sequenceChildBuildInfo })
 }
 
@@ -165,7 +165,7 @@ class UnorderedSequence(
 
   private lazy val parsers = alternatives.map(_.parser)
 
-  override lazy val parser: Parser = {
+  override lazy val parserImpl: Parser = {
 
     sq.hasSeparator match {
       case true => {
@@ -185,7 +185,7 @@ class UnorderedSequence(
     }
   }
 
-  override lazy val unparser: Unparser = {
+  override lazy val unparserImpl: Unparser = {
     sq match {
       case sgr: SequenceGroupRef if sgr.isHidden =>
         /*
@@ -227,6 +227,6 @@ class UnorderedSequence(
     }
   }
 
-  override lazy val builder: InfosetBuilder =
+  override lazy val builderImpl: InfosetBuilder =
     SequenceInfosetBuilder(sequenceChildren.map { _.sequenceChildBuildInfo })
 }

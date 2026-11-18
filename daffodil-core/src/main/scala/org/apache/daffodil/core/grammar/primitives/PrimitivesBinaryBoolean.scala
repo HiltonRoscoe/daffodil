@@ -26,7 +26,7 @@ import org.apache.daffodil.unparsers.runtime1.BinaryBooleanMinimumLengthUnparser
 import org.apache.daffodil.unparsers.runtime1.BinaryBooleanUnparser
 
 class BinaryBoolean(val e: ElementBase) extends Terminal(e, true) {
-  override lazy val parser = new BinaryBooleanParser(
+  override lazy val parserImpl = new BinaryBooleanParser(
     e.elementRuntimeData,
     e.binaryBooleanTrueRep,
     e.binaryBooleanFalseRep,
@@ -35,7 +35,7 @@ class BinaryBoolean(val e: ElementBase) extends Terminal(e, true) {
     e.lengthKind
   )
 
-  override lazy val unparser: Unparser = new BinaryBooleanUnparser(
+  override lazy val unparserImpl: Unparser = new BinaryBooleanUnparser(
     e.elementRuntimeData,
     e.binaryBooleanTrueRep,
     e.binaryBooleanFalseRep,
@@ -46,14 +46,14 @@ class BinaryBoolean(val e: ElementBase) extends Terminal(e, true) {
 }
 
 class BinaryBooleanPrefixedLength(val e: ElementBase) extends Terminal(e, true) {
-  override lazy val parser = new BinaryBooleanBitLimitLengthParser(
+  override lazy val parserImpl = new BinaryBooleanBitLimitLengthParser(
     e.elementRuntimeData,
     e.binaryBooleanTrueRep,
     e.binaryBooleanFalseRep,
     e.lengthUnits
   )
 
-  override lazy val unparser: Unparser = new BinaryBooleanMinimumLengthUnparser(
+  override lazy val unparserImpl: Unparser = new BinaryBooleanMinimumLengthUnparser(
     e.elementRuntimeData,
     e.binaryBooleanTrueRep,
     e.binaryBooleanFalseRep,

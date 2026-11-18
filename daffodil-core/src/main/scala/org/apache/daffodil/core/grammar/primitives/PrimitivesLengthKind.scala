@@ -61,19 +61,19 @@ import org.apache.daffodil.unparsers.runtime1.StringNoTruncateUnparser
 
 case class HexBinarySpecifiedLength(e: ElementBase) extends Terminal(e, true) {
 
-  override lazy val parser: DaffodilParser =
+  override lazy val parserImpl: DaffodilParser =
     new HexBinarySpecifiedLengthParser(e.elementRuntimeData, e.elementLengthInBitsEv)
 
-  override lazy val unparser: DaffodilUnparser =
+  override lazy val unparserImpl: DaffodilUnparser =
     new HexBinarySpecifiedLengthUnparser(e.elementRuntimeData, e.unparseTargetLengthInBitsEv)
 }
 
 case class BlobSpecifiedLength(e: ElementBase) extends Terminal(e, true) {
 
-  override lazy val parser =
+  override lazy val parserImpl =
     new BlobSpecifiedLengthParser(e.elementRuntimeData, e.elementLengthInBitsEv)
 
-  override lazy val unparser =
+  override lazy val unparserImpl =
     new BlobSpecifiedLengthUnparser(e.elementRuntimeData, e.unparseTargetLengthInBitsEv)
 }
 
@@ -81,10 +81,10 @@ case class StringOfSpecifiedLength(e: ElementBase) extends Terminal(e, true) wit
 
   private def erd = e.elementRuntimeData
 
-  override lazy val parser: DaffodilParser =
+  override lazy val parserImpl: DaffodilParser =
     new StringOfSpecifiedLengthParser(parsingPadChar, justificationTrim, erd)
 
-  override lazy val unparser: DaffodilUnparser = {
+  override lazy val unparserImpl: DaffodilUnparser = {
     (e.stringTruncationType, e.lengthUnits) match {
       case (TextTruncationType.None, _) => new StringNoTruncateUnparser(erd)
       case (stt, LengthUnits.Characters) =>
@@ -136,7 +136,7 @@ abstract class StringDelimited(e: ElementBase) extends StringDelimBase(e, true) 
     }
   }
 
-  override lazy val parser: DaffodilParser = new StringDelimitedParser(
+  override lazy val parserImpl: DaffodilParser = new StringDelimitedParser(
     e.elementRuntimeData,
     justificationTrim,
     parsingPadChar,
@@ -145,7 +145,7 @@ abstract class StringDelimited(e: ElementBase) extends StringDelimBase(e, true) 
     isDelimRequired
   )
 
-  override lazy val unparser: DaffodilUnparser =
+  override lazy val unparserImpl: DaffodilUnparser =
     new StringDelimitedUnparser(e.erd, escapeSchemeUnparseEvOpt, isDelimRequired)
 
 }
@@ -156,14 +156,14 @@ case class StringDelimitedEndOfData(e: ElementBase) extends StringDelimited(e) {
 
 abstract class HexBinaryDelimited(e: ElementBase) extends StringDelimited(e) {
 
-  override lazy val parser: DaffodilParser = new HexBinaryDelimitedParser(
+  override lazy val parserImpl: DaffodilParser = new HexBinaryDelimitedParser(
     e.elementRuntimeData,
     textDelimitedParser,
     fieldDFAParseEv,
     isDelimRequired
   )
 
-  override lazy val unparser: DaffodilUnparser =
+  override lazy val unparserImpl: DaffodilUnparser =
     new HexBinaryMinLengthInBytesUnparser(e.minLength.longValue, e.elementRuntimeData)
 }
 
@@ -173,21 +173,21 @@ case class HexBinaryDelimitedEndOfData(e: ElementBase) extends HexBinaryDelimite
 
 case class HexBinaryEndOfBitLimit(e: ElementBase) extends Terminal(e, true) {
 
-  override lazy val parser: DaffodilParser = new HexBinaryEndOfBitLimitParser(
+  override lazy val parserImpl: DaffodilParser = new HexBinaryEndOfBitLimitParser(
     e.elementRuntimeData
   )
 
-  override lazy val unparser: DaffodilUnparser =
+  override lazy val unparserImpl: DaffodilUnparser =
     new HexBinaryMinLengthInBytesUnparser(e.minLength.longValue, e.elementRuntimeData)
 }
 
 case class HexBinaryLengthPrefixed(e: ElementBase) extends Terminal(e, true) {
 
-  override lazy val parser: DaffodilParser = new HexBinaryEndOfBitLimitParser(
+  override lazy val parserImpl: DaffodilParser = new HexBinaryEndOfBitLimitParser(
     e.elementRuntimeData
   )
 
-  override lazy val unparser: DaffodilUnparser =
+  override lazy val unparserImpl: DaffodilUnparser =
     new HexBinaryMinLengthInBytesUnparser(e.minLength.longValue, e.elementRuntimeData)
 }
 
@@ -196,7 +196,7 @@ abstract class PackedIntegerDelimited(
   packedSignCodes: PackedSignCodes
 ) extends StringDelimited(e) {
 
-  override lazy val parser: DaffodilParser = new PackedIntegerDelimitedParser(
+  override lazy val parserImpl: DaffodilParser = new PackedIntegerDelimitedParser(
     e.elementRuntimeData,
     textDelimitedParser,
     fieldDFAParseEv,
@@ -204,7 +204,7 @@ abstract class PackedIntegerDelimited(
     packedSignCodes
   )
 
-  override lazy val unparser: DaffodilUnparser =
+  override lazy val unparserImpl: DaffodilUnparser =
     new PackedIntegerMinimumLengthUnparser(e.elementRuntimeData, packedSignCodes)
 }
 
@@ -218,7 +218,7 @@ case class PackedIntegerDelimitedEndOfData(
 abstract class PackedDecimalDelimited(e: ElementBase, packedSignCodes: PackedSignCodes)
   extends StringDelimited(e) {
 
-  override lazy val parser: DaffodilParser = new PackedDecimalDelimitedParser(
+  override lazy val parserImpl: DaffodilParser = new PackedDecimalDelimitedParser(
     e.elementRuntimeData,
     textDelimitedParser,
     fieldDFAParseEv,
@@ -228,7 +228,7 @@ abstract class PackedDecimalDelimited(e: ElementBase, packedSignCodes: PackedSig
     e.decimalSigned
   )
 
-  override lazy val unparser: DaffodilUnparser = new PackedDecimalMinimumLengthUnparser(
+  override lazy val unparserImpl: DaffodilUnparser = new PackedDecimalMinimumLengthUnparser(
     e.elementRuntimeData,
     e.binaryDecimalVirtualPoint,
     packedSignCodes,
@@ -243,14 +243,14 @@ case class PackedDecimalDelimitedEndOfData(e: ElementBase, packedSignCodes: Pack
 
 abstract class BCDIntegerDelimited(e: ElementBase) extends StringDelimited(e) {
 
-  override lazy val parser: DaffodilParser = new BCDIntegerDelimitedParser(
+  override lazy val parserImpl: DaffodilParser = new BCDIntegerDelimitedParser(
     e.elementRuntimeData,
     textDelimitedParser,
     fieldDFAParseEv,
     isDelimRequired
   )
 
-  override lazy val unparser: DaffodilUnparser = new BCDIntegerMinimumLengthUnparser(
+  override lazy val unparserImpl: DaffodilUnparser = new BCDIntegerMinimumLengthUnparser(
     e.elementRuntimeData
   )
 }
@@ -261,7 +261,7 @@ case class BCDIntegerDelimitedEndOfData(e: ElementBase) extends BCDIntegerDelimi
 
 abstract class BCDDecimalDelimited(e: ElementBase) extends StringDelimited(e) {
 
-  override lazy val parser: DaffodilParser = new BCDDecimalDelimitedParser(
+  override lazy val parserImpl: DaffodilParser = new BCDDecimalDelimitedParser(
     e.elementRuntimeData,
     textDelimitedParser,
     fieldDFAParseEv,
@@ -270,7 +270,7 @@ abstract class BCDDecimalDelimited(e: ElementBase) extends StringDelimited(e) {
     e.decimalSigned
   )
 
-  override lazy val unparser: DaffodilUnparser =
+  override lazy val unparserImpl: DaffodilUnparser =
     new BCDDecimalMinimumLengthUnparser(
       e.elementRuntimeData,
       e.binaryDecimalVirtualPoint
@@ -283,16 +283,17 @@ case class BCDDecimalDelimitedEndOfData(e: ElementBase) extends BCDDecimalDelimi
 
 abstract class IBM4690PackedIntegerDelimited(e: ElementBase) extends StringDelimited(e) {
 
-  override lazy val parser: DaffodilParser = new IBM4690PackedIntegerDelimitedParser(
+  override lazy val parserImpl: DaffodilParser = new IBM4690PackedIntegerDelimitedParser(
     e.elementRuntimeData,
     textDelimitedParser,
     fieldDFAParseEv,
     isDelimRequired
   )
 
-  override lazy val unparser: DaffodilUnparser = new IBM4690PackedIntegerMinimumLengthUnparser(
-    e.elementRuntimeData
-  )
+  override lazy val unparserImpl: DaffodilUnparser =
+    new IBM4690PackedIntegerMinimumLengthUnparser(
+      e.elementRuntimeData
+    )
 }
 
 case class IBM4690PackedIntegerDelimitedEndOfData(e: ElementBase)
@@ -302,7 +303,7 @@ case class IBM4690PackedIntegerDelimitedEndOfData(e: ElementBase)
 
 abstract class IBM4690PackedDecimalDelimited(e: ElementBase) extends StringDelimited(e) {
 
-  override lazy val parser: DaffodilParser = new IBM4690PackedDecimalDelimitedParser(
+  override lazy val parserImpl: DaffodilParser = new IBM4690PackedDecimalDelimitedParser(
     e.elementRuntimeData,
     textDelimitedParser,
     fieldDFAParseEv,
@@ -311,7 +312,7 @@ abstract class IBM4690PackedDecimalDelimited(e: ElementBase) extends StringDelim
     e.decimalSigned
   )
 
-  override lazy val unparser: DaffodilUnparser =
+  override lazy val unparserImpl: DaffodilUnparser =
     new IBM4690PackedDecimalMinimumLengthUnparser(
       e.elementRuntimeData,
       e.binaryDecimalVirtualPoint,
@@ -328,7 +329,7 @@ case class LiteralNilDelimitedEndOfData(eb: ElementBase) extends StringDelimited
 
   lazy val isDelimRequired: Boolean = false
 
-  override lazy val parser: DaffodilParser =
+  override lazy val parserImpl: DaffodilParser =
     new LiteralNilDelimitedEndOfDataParser(
       eb.elementRuntimeData,
       justificationTrim,
@@ -340,7 +341,7 @@ case class LiteralNilDelimitedEndOfData(eb: ElementBase) extends StringDelimited
       eb.ignoreCaseBool
     )
 
-  override lazy val unparser: DaffodilUnparser =
+  override lazy val unparserImpl: DaffodilUnparser =
     new LiteralNilDelimitedEndOfDataUnparser(
       eb.elementRuntimeData,
       eb.nilStringLiteralForUnparserEv,

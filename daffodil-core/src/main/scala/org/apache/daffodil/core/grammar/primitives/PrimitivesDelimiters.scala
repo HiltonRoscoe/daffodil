@@ -65,14 +65,14 @@ abstract class DelimiterText(
     case _ => false
   }
 
-  override lazy val parser: DaffodilParser = new DelimiterTextParser(
+  override lazy val parserImpl: DaffodilParser = new DelimiterTextParser(
     e.termRuntimeData,
     textParser,
     delimiterType,
     isDelimited,
     e.mustMatchNonZeroData
   )
-  override lazy val unparser: DaffodilUnparser =
+  override lazy val unparserImpl: DaffodilUnparser =
     new DelimiterTextUnparser(e.termRuntimeData, delimiterType)
 }
 

@@ -20,9 +20,13 @@ package org.apache.daffodil.core.runtime1
 import org.apache.daffodil.core.grammar.Gram
 import org.apache.daffodil.lib.exceptions.Assert
 import org.apache.daffodil.lib.util.Maybe
+import org.apache.daffodil.runtime1.infoset.ForwardingInfosetBuilder
 import org.apache.daffodil.runtime1.infoset.InfosetBuilder
 import org.apache.daffodil.runtime1.infoset.NadaInfosetBuilder
+import org.apache.daffodil.runtime1.processors.RuntimeData
+import org.apache.daffodil.runtime1.processors.parsers.ForwardingParser
 import org.apache.daffodil.runtime1.processors.parsers.Parser
+import org.apache.daffodil.runtime1.processors.unparsers.ForwardingUnparser
 import org.apache.daffodil.runtime1.processors.unparsers.Unparser
 
 trait GramRuntime1Mixin { self: Gram =>
@@ -31,8 +35,21 @@ trait GramRuntime1Mixin { self: Gram =>
    * Provides parser.
    *
    * Required to examine child parsers, and optimize itself out by propagating NadaParser if there is no parser.
+   *
+   * Recursive schemas re-enter this while it is still running. A Scala lazy val
+   * would deadlock on that thread, so the implementation is cached here and a
+   * re-entrant call receives a forwarding parser that is tied to the real one
+   * when construction finishes.
    */
-  def parser: Parser
+  final def parser: Parser = parserSlot.get(
+    new ForwardingParser(forwardRuntimeData),
+    parserImpl,
+    (forward, real) => forward.asInstanceOf[ForwardingParser].delegate = real
+  )
+
+  protected def parserImpl: Parser
+
+  private val parserSlot = new ForwardSlot[Parser]
 
   final def maybeParser: Maybe[Parser] = {
     if (this.isEmpty) Maybe.Nope
@@ -50,8 +67,18 @@ trait GramRuntime1Mixin { self: Gram =>
    * Provides unparser.
    *
    * Required to examine child unparsers, and optimize itself out by propagating NadaUnparser if there is no unparser.
+   *
+   * See `parser` for why this is not a lazy val.
    */
-  def unparser: Unparser
+  final def unparser: Unparser = unparserSlot.get(
+    new ForwardingUnparser(forwardRuntimeData),
+    unparserImpl,
+    (forward, real) => forward.asInstanceOf[ForwardingUnparser].delegate = real
+  )
+
+  protected def unparserImpl: Unparser
+
+  private val unparserSlot = new ForwardSlot[Unparser]
 
   final lazy val maybeUnparser: Maybe[Unparser] = {
     if (this.isEmpty) Maybe.Nope
@@ -67,5 +94,45 @@ trait GramRuntime1Mixin { self: Gram =>
    * the Unparser tree. Most Grams create or select no infoset content and
    * inherit this Nada default; only those that do override it.
    */
-  def builder: InfosetBuilder = NadaInfosetBuilder
+  final def builder: InfosetBuilder = builderSlot.get(
+    new ForwardingInfosetBuilder,
+    builderImpl,
+    (forward, real) => forward.asInstanceOf[ForwardingInfosetBuilder].delegate = real
+  )
+
+  protected def builderImpl: InfosetBuilder = NadaInfosetBuilder
+
+  private val builderSlot = new ForwardSlot[InfosetBuilder]
+
+  private def forwardRuntimeData: RuntimeData =
+    if (context eq null) null
+    else context.runtimeData
+}
+
+/**
+ * One memoized grammar result that can be observed while it is still being
+ * constructed. The forwarded object is the one already handed to the parent.
+ */
+private final class ForwardSlot[T >: Null <: AnyRef] {
+  private var memo: T = null
+  private var building = false
+  private var forward: T = null
+
+  def get(makeForward: => T, impl: => T, tie: (T, T) => Unit): T =
+    this.synchronized {
+      if (memo != null) memo
+      else if (building) {
+        if (forward == null) forward = makeForward
+        forward
+      } else {
+        building = true
+        try {
+          memo = impl
+        } finally {
+          building = false
+        }
+        if (forward != null && memo != null) tie(forward, memo)
+        memo
+      }
+    }
 }

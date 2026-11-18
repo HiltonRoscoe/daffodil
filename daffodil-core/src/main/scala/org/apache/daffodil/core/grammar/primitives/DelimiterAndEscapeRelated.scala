@@ -49,18 +49,18 @@ case class DelimiterStackCombinatorSequence(sq: SequenceTermBase, body: Gram)
   lazy val uTerm =
     if (sq.terminatorParseEv.isConstantEmptyString) Nope else One(sq.terminatorUnparseEv)
 
-  lazy val parser: DaffodilParser = new DelimiterStackParser(
+  lazy val parserImpl: DaffodilParser = new DelimiterStackParser(
     (pInit.toList ++ pSep.toList ++ pTerm.toList).toArray,
     sq.runtimeData,
     body.parser
   )
 
-  override lazy val unparser: DaffodilUnparser =
+  override lazy val unparserImpl: DaffodilUnparser =
     new DelimiterStackUnparser(uInit, uSep, uTerm, sq.termRuntimeData, body.unparser)
 
   // Delimiters build no infoset events; the builder tree skips straight to
   // whatever this sequence's body itself builds, if anything.
-  override lazy val builder: InfosetBuilder = body.builder
+  override lazy val builderImpl: InfosetBuilder = body.builder
 }
 
 case class DelimiterStackCombinatorChoice(ch: ChoiceTermBase, body: Gram)
@@ -75,18 +75,18 @@ case class DelimiterStackCombinatorChoice(ch: ChoiceTermBase, body: Gram)
   lazy val uTerm =
     if (ch.terminatorParseEv.isConstantEmptyString) Nope else One(ch.terminatorUnparseEv)
 
-  lazy val parser: DaffodilParser = new DelimiterStackParser(
+  lazy val parserImpl: DaffodilParser = new DelimiterStackParser(
     (pInit.toList ++ pTerm.toList).toArray,
     ch.runtimeData,
     body.parser
   )
 
-  override lazy val unparser: DaffodilUnparser =
+  override lazy val unparserImpl: DaffodilUnparser =
     new DelimiterStackUnparser(uInit, None, uTerm, ch.termRuntimeData, body.unparser)
 
   // Delimiters build no infoset events; the builder tree skips straight to
   // whatever this choice's body itself builds, if anything.
-  override lazy val builder: InfosetBuilder = body.builder
+  override lazy val builderImpl: InfosetBuilder = body.builder
 }
 
 case class DelimiterStackCombinatorElement(e: ElementBase, body: Gram)
@@ -110,13 +110,13 @@ case class DelimiterStackCombinatorElement(e: ElementBase, body: Gram)
       body.toString() +
       "</" + Misc.getNameFromClass(this) + ">"
   }
-  lazy val parser: DaffodilParser = {
+  lazy val parserImpl: DaffodilParser = {
     val p = body.parser
     if (p.isEmpty) p
     else new DelimiterStackParser(delims.toArray, e.termRuntimeData, p)
   }
 
-  override lazy val unparser: DaffodilUnparser = {
+  override lazy val unparserImpl: DaffodilUnparser = {
     val u = body.unparser
     if (u.isEmpty) u
     else new DelimiterStackUnparser(uInit, None, uTerm, e.termRuntimeData, u)
@@ -124,7 +124,7 @@ case class DelimiterStackCombinatorElement(e: ElementBase, body: Gram)
 
   // Delimiters build no infoset events; the builder tree skips straight to
   // whatever this element's body itself builds, if anything.
-  override lazy val builder: InfosetBuilder = body.builder
+  override lazy val builderImpl: InfosetBuilder = body.builder
 }
 
 case class DynamicEscapeSchemeCombinatorElement(e: ElementBase, body: Gram)
@@ -138,13 +138,13 @@ case class DynamicEscapeSchemeCombinatorElement(e: ElementBase, body: Gram)
 
   Assert.invariant(!schemeParseIsConstant || !schemeUnparseIsConstant)
 
-  lazy val parser: DaffodilParser = {
+  lazy val parserImpl: DaffodilParser = {
     val p = body.parser
     if (p.isEmpty || schemeParseIsConstant) p
     else new DynamicEscapeSchemeParser(schemeParseOpt.get, e.termRuntimeData, p)
   }
 
-  override lazy val unparser: DaffodilUnparser = {
+  override lazy val unparserImpl: DaffodilUnparser = {
     val u = body.unparser
     if (u.isEmpty || schemeUnparseIsConstant) u
     else new DynamicEscapeSchemeUnparser(schemeUnparseOpt.get, e.termRuntimeData, u)
@@ -153,5 +153,5 @@ case class DynamicEscapeSchemeCombinatorElement(e: ElementBase, body: Gram)
   // The escape scheme only governs delimiter matching in written bytes; the
   // builder tree skips straight to whatever this element's body itself
   // builds, if anything.
-  override lazy val builder: InfosetBuilder = body.builder
+  override lazy val builderImpl: InfosetBuilder = body.builder
 }

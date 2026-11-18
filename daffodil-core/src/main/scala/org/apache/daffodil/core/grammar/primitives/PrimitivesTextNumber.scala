@@ -48,10 +48,10 @@ import com.ibm.icu.text.DecimalFormat
 case class ConvertTextCombinator(e: ElementBase, value: Gram, converter: Gram)
   extends Terminal(e, !(value.isEmpty || converter.isEmpty)) {
 
-  lazy val parser =
+  lazy val parserImpl =
     new ConvertTextCombinatorParser(e.termRuntimeData, value.parser, converter.parser)
 
-  override lazy val unparser =
+  override lazy val unparserImpl =
     new ConvertTextCombinatorUnparser(e.termRuntimeData, value.unparser, converter.unparser)
 }
 
@@ -640,7 +640,7 @@ case class ConvertTextStandardNumberPrim(e: ElementBase)
     ev
   }
 
-  lazy val parser: Parser =
+  lazy val parserImpl: Parser =
     new ConvertTextStandardNumberParser(
       textNumberFormatEv,
       zeroRepsRegex,
@@ -648,7 +648,7 @@ case class ConvertTextStandardNumberPrim(e: ElementBase)
       textDecimalVirtualPoint
     )
 
-  override lazy val unparser: Unparser =
+  override lazy val unparserImpl: Unparser =
     new ConvertTextNumberUnparser(
       textNumberFormatEv,
       zeroRepUnparse,

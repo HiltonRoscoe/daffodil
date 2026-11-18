@@ -22,6 +22,7 @@ import org.apache.daffodil.lib.schema.annotation.props.gen.AlignmentKind
 import org.apache.daffodil.lib.schema.annotation.props.gen.EncodingErrorPolicy
 import org.apache.daffodil.lib.schema.annotation.props.gen.Representation
 import org.apache.daffodil.lib.schema.annotation.props.gen.YesNo
+import org.apache.daffodil.lib.util.CycleGuard
 import org.apache.daffodil.lib.util.Maybe
 import org.apache.daffodil.runtime1.dsom.*
 import org.apache.daffodil.runtime1.processors.EncodingRuntimeData
@@ -211,7 +212,12 @@ trait TermEncodingMixin extends KnownEncodingMixin { self: Term =>
    * expression value. For now, if it is an expression
    * then we lose.
    */
-  final lazy val summaryEncoding: EncodingLattice = {
+  final def summaryEncoding: EncodingLattice =
+    CycleGuard(this, "summaryEncoding", NoText) {
+      summaryEncodingValue
+    }
+
+  private lazy val summaryEncodingValue: EncodingLattice = {
     val myEnc =
       if (!isRepresented) NoText
       else if (!isLocallyTextOnly) Binary

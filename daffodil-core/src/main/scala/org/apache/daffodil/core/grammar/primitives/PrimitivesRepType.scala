@@ -30,7 +30,7 @@ case class RepType(e: ElementBase) extends Terminal(e, e.hasRepType) {
   private lazy val repTypeParser = e.repTypeElementDecl.enclosedElement.parser
   private lazy val repTypeUnparser = e.repTypeElementDecl.enclosedElement.unparser
 
-  override lazy val parser: Parser = {
+  override lazy val parserImpl: Parser = {
     new RepTypeParser(
       repTypeParser,
       e.elementRuntimeData,
@@ -42,7 +42,7 @@ case class RepType(e: ElementBase) extends Terminal(e, e.hasRepType) {
     )
   }
 
-  override lazy val unparser: Unparser = {
+  override lazy val unparserImpl: Unparser = {
     new RepTypeUnparser(
       repTypeUnparser,
       e.elementRuntimeData,

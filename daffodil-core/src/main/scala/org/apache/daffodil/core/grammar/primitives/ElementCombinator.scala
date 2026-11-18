@@ -91,7 +91,7 @@ class ElementCombinator(
     repTypeElementGram
   )
 
-  override lazy val parser: Parser = {
+  override lazy val parserImpl: Parser = {
     //
     // This sub combinator is exactly what we've done for a while
     // for parsing
@@ -123,7 +123,7 @@ class ElementCombinator(
         (context.lengthKind._eq_(LengthKind.Implicit)) &&
         (context.impliedRepresentation._eq_(Representation.Text)))
 
-  override lazy val unparser: Unparser = {
+  override lazy val unparserImpl: Unparser = {
     if (context.isOutputValueCalc) {
       new ElementOVCSpecifiedLengthUnparser(
         context.erd,
@@ -161,7 +161,7 @@ class ElementCombinator(
 
   // Shares the memoized unparser above for unparseBegin/unparseEnd, so
   // build and the unparse see identical node-creation behavior.
-  override lazy val builder: InfosetBuilder = {
+  override lazy val builderImpl: InfosetBuilder = {
     if (context.isOutputValueCalc || isSpecifiedLength) {
       val eu = unparser.asInstanceOf[ElementUnparserBase]
       val contentBuilder = eRepTypeBuilder.orElse(eBuilder)
@@ -178,9 +178,9 @@ case class ElementUnused(ctxt: ElementBase)
     ctxt.shouldAddFill ||
       ctxt.shouldCheckExcessLength
   ) {
-  override def parser = new NadaParser(ctxt.erd)
+  override def parserImpl = new NadaParser(ctxt.erd)
 
-  override lazy val unparser: Unparser = new ElementUnusedUnparser(
+  override lazy val unparserImpl: Unparser = new ElementUnusedUnparser(
     ctxt.erd,
     ctxt.maybeUnparseTargetLengthInBitsEv.get,
     ctxt.maybeLengthEv,
@@ -205,19 +205,19 @@ case class ElementUnused(ctxt: ElementBase)
 case class ZeroLengthComplexTypeDelimiterScanner(ctxt: ElementBase, sq: SequenceTermBase)
   extends Terminal(ctxt, true) {
 
-  override lazy val parser: Parser =
+  override lazy val parserImpl: Parser =
     new ZeroLengthComplexTypeDelimitedParser(sq.termRuntimeData)
 
-  override def unparser: Unparser = hasNoUnparser
+  override def unparserImpl: Unparser = hasNoUnparser
 }
 
 case class OnlyPadding(ctxt: ElementBase)
   extends Terminal(ctxt, ctxt.shouldAddPadding)
   with Padded {
 
-  override def parser = new NadaParser(ctxt.erd)
+  override def parserImpl = new NadaParser(ctxt.erd)
 
-  override lazy val unparser: Unparser = {
+  override lazy val unparserImpl: Unparser = {
     Assert.invariant(ctxt.maybeUnparseMinOrTargetLengthInBitsEv.isDefined)
     val mmtlev = ctxt.maybeUnparseMinOrTargetLengthInBitsEv.get
     new OnlyPaddingUnparser(
@@ -234,9 +234,9 @@ case class OnlyPadding(ctxt: ElementBase)
 case class RightCenteredPadding(ctxt: ElementBase)
   extends Terminal(ctxt, ctxt.shouldAddPadding)
   with Padded {
-  override def parser = new NadaParser(ctxt.erd)
+  override def parserImpl = new NadaParser(ctxt.erd)
 
-  override lazy val unparser: Unparser =
+  override lazy val unparserImpl: Unparser =
     new RightCenteredPaddingUnparser(
       ctxt.erd,
       ctxt.maybeUnparseMinOrTargetLengthInBitsEv.get,
@@ -250,9 +250,9 @@ case class RightCenteredPadding(ctxt: ElementBase)
 case class LeftCenteredPadding(ctxt: ElementBase)
   extends Terminal(ctxt, ctxt.shouldAddPadding)
   with Padded {
-  override def parser = new NadaParser(ctxt.erd)
+  override def parserImpl = new NadaParser(ctxt.erd)
 
-  override lazy val unparser: Unparser =
+  override lazy val unparserImpl: Unparser =
     new LeftCenteredPaddingUnparser(
       ctxt.erd,
       ctxt.maybeUnparseMinOrTargetLengthInBitsEv.get,
@@ -270,9 +270,9 @@ case class RightFill(ctxt: ElementBase)
       ctxt.shouldCheckExcessLength
   )
   with Padded {
-  override def parser = new NadaParser(ctxt.erd)
+  override def parserImpl = new NadaParser(ctxt.erd)
 
-  override lazy val unparser: Unparser = new RightFillUnparser(
+  override lazy val unparserImpl: Unparser = new RightFillUnparser(
     ctxt.erd,
     ctxt.maybeUnparseTargetLengthInBitsEv.get,
     ctxt.maybeLengthEv,
@@ -283,7 +283,7 @@ case class RightFill(ctxt: ElementBase)
 }
 
 case class SimpleTypeRetry(ctxt: ElementBase, v: Gram) extends Terminal(ctxt, true) {
-  override def parser = v.parser
+  override def parserImpl = v.parser
 
   // When unparsing, the target length of this simple type might not actually
   // match the actual unparsed length due to things like padding or fill. But
@@ -299,18 +299,18 @@ case class SimpleTypeRetry(ctxt: ElementBase, v: Gram) extends Terminal(ctxt, tr
     }
   }
 
-  override def unparser =
+  override def unparserImpl =
     new SimpleTypeRetryUnparser(ctxt.erd, maybeExactTargetLength, v.unparser)
 }
 
 case class CaptureContentLengthStart(ctxt: ElementBase) extends Terminal(ctxt, true) {
-  override def parser =
+  override def parserImpl =
     if (ctxt.shouldCaptureParseContentLength)
       new CaptureStartOfContentLengthParser(ctxt.erd)
     else
       new NadaParser(ctxt.erd)
 
-  override lazy val unparser: Unparser =
+  override lazy val unparserImpl: Unparser =
     if (ctxt.shouldCaptureUnparseContentLength)
       new CaptureStartOfContentLengthUnparser(ctxt.erd)
     else
@@ -318,13 +318,13 @@ case class CaptureContentLengthStart(ctxt: ElementBase) extends Terminal(ctxt, t
 }
 
 case class CaptureContentLengthEnd(ctxt: ElementBase) extends Terminal(ctxt, true) {
-  override def parser =
+  override def parserImpl =
     if (ctxt.shouldCaptureParseContentLength)
       new CaptureEndOfContentLengthParser(ctxt.erd)
     else
       new NadaParser(ctxt.erd)
 
-  override lazy val unparser: Unparser =
+  override lazy val unparserImpl: Unparser =
     if (ctxt.shouldCaptureUnparseContentLength)
       new CaptureEndOfContentLengthUnparser(ctxt.erd, ctxt.maybeFixedLengthInBits)
     else
@@ -332,13 +332,13 @@ case class CaptureContentLengthEnd(ctxt: ElementBase) extends Terminal(ctxt, tru
 }
 
 case class CaptureValueLengthStart(ctxt: ElementBase) extends Terminal(ctxt, true) {
-  override def parser =
+  override def parserImpl =
     if (ctxt.shouldCaptureParseValueLength)
       new CaptureStartOfValueLengthParser(ctxt.erd)
     else
       new NadaParser(ctxt.erd)
 
-  override lazy val unparser: Unparser =
+  override lazy val unparserImpl: Unparser =
     if (ctxt.shouldCaptureUnparseValueLength)
       new CaptureStartOfValueLengthUnparser(ctxt.erd)
     else
@@ -346,13 +346,13 @@ case class CaptureValueLengthStart(ctxt: ElementBase) extends Terminal(ctxt, tru
 }
 
 case class CaptureValueLengthEnd(ctxt: ElementBase) extends Terminal(ctxt, true) {
-  override def parser =
+  override def parserImpl =
     if (ctxt.shouldCaptureParseValueLength)
       new CaptureEndOfValueLengthParser(ctxt.erd)
     else
       new NadaParser(ctxt.erd)
 
-  override lazy val unparser: Unparser =
+  override lazy val unparserImpl: Unparser =
     if (ctxt.shouldCaptureUnparseValueLength)
       new CaptureEndOfValueLengthUnparser(ctxt.erd)
     else
@@ -367,7 +367,7 @@ class ElementParseAndUnspecifiedLength(
   val repTypeElementGram: Gram
 ) extends ElementCombinatorBase(context, eBeforeGram, eGram, eAfterGram, repTypeElementGram) {
 
-  lazy val parser: Parser =
+  lazy val parserImpl: Parser =
     if (context.isRepresented)
       new ElementParser(
         context.erd,
@@ -396,7 +396,7 @@ class ElementParseAndUnspecifiedLength(
         eAfterParser
       )
 
-  override lazy val unparser: Unparser = {
+  override lazy val unparserImpl: Unparser = {
     if (context.isRepresented) {
       if (context.isOutputValueCalc) {
         new ElementOVCUnspecifiedLengthUnparser(
@@ -426,7 +426,7 @@ class ElementParseAndUnspecifiedLength(
 
   // Shares the memoized unparser above for unparseBegin/unparseEnd, so
   // build and the unparse see identical nilled/OVC/IVC node-creation behavior.
-  override lazy val builder: InfosetBuilder = {
+  override lazy val builderImpl: InfosetBuilder = {
     val eu = unparser.asInstanceOf[ElementUnparserBase]
     val contentBuilder = eRepTypeBuilder.orElse(eBuilder)
     new ElementInfosetBuilder(context.erd, eu, contentBuilder)
@@ -492,7 +492,7 @@ abstract class ElementCombinatorBase(
 
   lazy val eRepTypeParser: Maybe[Parser] = repTypeElementGram.maybeParser
 
-  def parser: Parser
+  def parserImpl: Parser
 
   lazy val uSetVar = context.setVariableStatements.map(_.gram(context).unparser).toArray
 
@@ -504,7 +504,7 @@ abstract class ElementCombinatorBase(
 
   lazy val eRepTypeUnparser: Maybe[Unparser] = repTypeElementGram.maybeUnparser
 
-  def unparser: Unparser
+  def unparserImpl: Unparser
 
   lazy val eBuilder: InfosetBuilder = eGram.builder
 
