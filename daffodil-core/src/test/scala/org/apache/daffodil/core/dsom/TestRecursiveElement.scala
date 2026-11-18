@@ -82,6 +82,39 @@ class TestRecursiveElement {
     XMLUtils.compareAndReport(expected, actual)
   }
 
+  @Test def testNonRootElementCanReferToItself(): Unit = {
+    val schema = SchemaUtils.dfdlTestSchema(
+      includeGeneralFormat,
+      <dfdl:format ref="tns:GeneralFormat" encoding="ASCII"/>,
+      Seq(
+        <xs:element name="pdf">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element ref="tns:box"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>,
+        <xs:element name="box">
+          <xs:complexType>
+            <xs:choice>
+              <xs:element name="stop" type="xs:string" dfdl:initiator="S"
+                          dfdl:lengthKind="explicit" dfdl:length="1"/>
+              <xs:sequence dfdl:initiator="D">
+                <xs:element name="down" type="xs:string"
+                            dfdl:lengthKind="explicit" dfdl:length="1"/>
+                <xs:element ref="tns:box"/>
+              </xs:sequence>
+            </xs:choice>
+          </xs:complexType>
+        </xs:element>
+      )
+    )
+    val (_, actual) = TestUtils.testString(schema, "DADBSQ")
+    val expected: Node =
+      <pdf><box><down>A</down><box><down>B</down><box><stop>Q</stop></box></box></box></pdf>
+    XMLUtils.compareAndReport(expected, actual)
+  }
+
   @Test def testOptionalElementStopsAtMaxOccurs(): Unit = {
     val schema = SchemaUtils.dfdlTestSchema(
       includeGeneralFormat,

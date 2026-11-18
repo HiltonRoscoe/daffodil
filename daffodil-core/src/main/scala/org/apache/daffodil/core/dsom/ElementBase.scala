@@ -317,22 +317,53 @@ trait ElementBase
     }
   }
 
+  /**
+   * True when `target` is this element or sits in its content, following element
+   * references. Lexical parents are not enough: a dictionary's reference lives in
+   * the `cos` declaration, which the dictionary also contains.
+   */
+  private def contentReaches(target: ElementBase): Boolean = {
+    val seen = new java.util.IdentityHashMap[ElementBase, java.lang.Boolean]()
+    def walk(e: ElementBase): Boolean =
+      if (seen.containsKey(e)) false
+      else {
+        seen.put(e, java.lang.Boolean.TRUE)
+        e.elementChildren.exists { child =>
+          (child eq target) || walk(child)
+        }
+      }
+    (this eq target) || walk(this)
+  }
+
   private lazy val parentMinimizedScope = LV(Symbol("parentMinimizedScope")) {
-    val ee =
-      enclosingElements.headOption // FIXME: bug DAFFODIL-2282 doesn't work unless all are same.
+    // FIXME: bug DAFFODIL-2282 doesn't work unless all are same.
+    // A global element lists every reference as an enclosing element. One that
+    // this element's content can reach cannot supply the namespace scope,
+    // because that scope is the value being computed. Use an outside reference
+    // when there is one.
+    val outside = enclosingElements.filterNot(contentReaches)
+    val chosen = if (outside.nonEmpty) outside.headOption else enclosingElements.headOption
     val res =
-      if (ee.isEmpty)
+      if (chosen.isEmpty)
         scala.xml.TopScope
       else
-        ee.get.minimizedScope
+        chosen.get.minimizedScope
     res
   }.value
 
   /**
    * To be properly constructed, scala's xml Elems must share the scope (namespace bindings) of the enclosing
    * parent element, except when it adds more of its own bindings, in which case the tail is supposed to be shared.
+   *
+   * Callers go through the def so a recursive element reference takes TopScope
+   * instead of re-entering the Scala lazy val, which deadlocks on this thread.
    */
-  protected lazy val minimizedScope: NamespaceBinding = LV(Symbol("minimizedScope")) {
+  final def minimizedScope: NamespaceBinding =
+    CycleGuard(this, "minimizedScope", scala.xml.TopScope) {
+      minimizedScopeImpl
+    }
+
+  protected lazy val minimizedScopeImpl: NamespaceBinding = LV(Symbol("minimizedScope")) {
     val uniquePairs =
       if (this.isInstanceOf[Root]) {
         // If this is the root element and it contains xmlns="", then remove

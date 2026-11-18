@@ -58,7 +58,7 @@ class LocalElementDecl private (xml: Node, lexicalParent: SchemaComponent, posit
 sealed abstract class QuasiElementDeclBase(xml: Node, lexicalParent: SchemaComponent)
   extends LocalElementDeclBase(xml, Option(lexicalParent), -1) {
 
-  override lazy val minimizedScope = TopScope
+  override protected lazy val minimizedScopeImpl = TopScope
 
   override def isQuasiElement = true
 }
