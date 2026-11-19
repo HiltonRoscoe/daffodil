@@ -131,6 +131,49 @@ a few lines of pointless text like this.""".replace("\r\n", "\n").replace("\n", 
     XMLUtils.compareAndReport(infoset, actual)
   }
 
+  /**
+   * A layer I/O error while matching an initiator must return DFA registers so
+   * the choice can try the next alternative. Without try/finally around
+   * TextParser, zlib-style lazy inflate throws during the initiator scan and
+   * aborts with RegistersPool leaked.
+   */
+  val GZIPLayerInitiatorSchema =
+    SchemaUtils.dfdlTestSchema(
+      <xs:include schemaLocation="/org/apache/daffodil/xsd/DFDLGeneralFormat.dfdl.xsd"/>
+          <xs:import namespace="urn:org.apache.daffodil.layers.gzip"
+                     schemaLocation="/org/apache/daffodil/layers/xsd/gzipLayer.dfdl.xsd"/>,
+      <dfdl:format ref="tns:GeneralFormat" representation="binary"/>,
+      <xs:element name="root">
+        <xs:complexType>
+          <xs:choice>
+            <xs:element name="inflated" xmlns:gz="urn:org.apache.daffodil.layers.gzip">
+              <xs:complexType>
+                <xs:sequence dfdlx:layer="gz:gzip">
+                  <xs:sequence dfdl:initiator="&lt;&lt;" dfdl:terminator="&gt;&gt;">
+                    <xs:element name="s" type="xs:string" dfdl:lengthKind="delimited"/>
+                  </xs:sequence>
+                </xs:sequence>
+              </xs:complexType>
+            </xs:element>
+            <xs:element name="hex" type="xs:hexBinary" dfdl:lengthKind="delimited" dfdl:encoding="iso-8859-1"/>
+          </xs:choice>
+        </xs:complexType>
+      </xs:element>,
+      elementFormDefault = "unqualified"
+    )
+
+  @Test def testGZIPLayerInitiatorErr(): Unit = {
+    val sch = GZIPLayerInitiatorSchema
+    val data = makeGZIPData(text)
+    ((data.length / 2) to data.length - 1).foreach { i => data(i) = 0 }
+    val infoset =
+      <ex:root xmlns:ex={example}>
+        <hex>{data.map(b => f"${b & 0xff}%02X").mkString}</hex>
+      </ex:root>
+    val (_, actual) = TestUtils.testBinary(sch, data, areTracing = false)
+    XMLUtils.compareAndReport(infoset, actual)
+  }
+
   @Test def testGZIPLayerErr1(): Unit = {
     val sch = GZIPLayer1Schema
     val (data, _) = makeGZIPLayer1Data()

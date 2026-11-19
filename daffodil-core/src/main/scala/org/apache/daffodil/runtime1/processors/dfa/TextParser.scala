@@ -42,13 +42,16 @@ class TextParser(override val context: TermRuntimeData) extends DFAParser {
     while (delimIter.hasNext()) {
       val d = delimIter.next()
       val reg = state.dfaRegistersPool.getFromPool("TextParser1")
-      reg.reset(state, input, delimIter, m)
-      m = input.markPos
-      d.run(reg)
-      if (reg.status == StateKind.Succeeded) {
-        lmt.successfulMatch(reg.matchStartPos, reg.delimString, d, delimIter.currentIndex)
+      try {
+        reg.reset(state, input, delimIter, m)
+        m = input.markPos
+        d.run(reg)
+        if (reg.status == StateKind.Succeeded) {
+          lmt.successfulMatch(reg.matchStartPos, reg.delimString, d, delimIter.currentIndex)
+        }
+      } finally {
+        state.dfaRegistersPool.returnToPool(reg)
       }
-      state.dfaRegistersPool.returnToPool(reg)
     }
     input.resetPos(m)
 
