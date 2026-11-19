@@ -77,17 +77,20 @@ abstract class TextDelimitedParserBase(
               beforeDelimiter = input.markPos
               val delimReg: Registers =
                 state.dfaRegistersPool.getFromPool("TextDelimitedParserBase2")
-              delimReg.reset(state, input, delimIter)
-              d.run(delimReg)
-              if (delimReg.status == StateKind.Succeeded) {
-                lmt.successfulMatch(
-                  delimReg.matchStartPos,
-                  delimReg.delimString,
-                  d,
-                  delimIter.currentIndex
-                )
+              try {
+                delimReg.reset(state, input, delimIter)
+                d.run(delimReg)
+                if (delimReg.status == StateKind.Succeeded) {
+                  lmt.successfulMatch(
+                    delimReg.matchStartPos,
+                    delimReg.delimString,
+                    d,
+                    delimIter.currentIndex
+                  )
+                }
+              } finally {
+                state.dfaRegistersPool.returnToPool(delimReg)
               }
-              state.dfaRegistersPool.returnToPool(delimReg)
             }
             if (!lmt.longestMatches.isEmpty) {
               stillSearching = false
@@ -249,11 +252,15 @@ class TextDelimitedParserWithEscapeBlock(
     delimIter: DelimiterIterator
   ): Boolean = {
     val startBlockRegister = state.dfaRegistersPool.getFromPool("parseStartBlock")
-    startBlockRegister.reset(state, input, delimIter)
+    val startStatus =
+      try {
+        startBlockRegister.reset(state, input, delimIter)
 
-    startBlock.run(startBlockRegister) // find the block start, fail otherwise
-    val startStatus = startBlockRegister.status
-    state.dfaRegistersPool.returnToPool(startBlockRegister)
+        startBlock.run(startBlockRegister) // find the block start, fail otherwise
+        startBlockRegister.status
+      } finally {
+        state.dfaRegistersPool.returnToPool(startBlockRegister)
+      }
     startStatus match {
       case StateKind.Succeeded => true // continue
       case _ => false // Failed
@@ -277,6 +284,7 @@ class TextDelimitedParserWithEscapeBlock(
     val lmt = new LongestMatchTracker()
 
     val fieldRegister = state.dfaRegistersPool.getFromPool("parseRemainder")
+    try {
     fieldRegister.reset(state, input, delimIter)
 
     var stillSearching: Boolean = true
@@ -297,10 +305,14 @@ class TextDelimitedParserWithEscapeBlock(
         case StateKind.Paused => {
           // Pick up where field left off, we are looking for the blockEnd.
           val endBlockRegister = state.dfaRegistersPool.getFromPool("parseRemainder2")
-          endBlockRegister.reset(state, input, delimIter)
-          endBlock.run(endBlockRegister)
-          val endBlockStatus = endBlockRegister.status
-          state.dfaRegistersPool.returnToPool(endBlockRegister)
+          val endBlockStatus =
+            try {
+              endBlockRegister.reset(state, input, delimIter)
+              endBlock.run(endBlockRegister)
+              endBlockRegister.status
+            } finally {
+              state.dfaRegistersPool.returnToPool(endBlockRegister)
+            }
 
           endBlockStatus match {
             case StateKind.Succeeded => {
@@ -314,20 +326,23 @@ class TextDelimitedParserWithEscapeBlock(
                 // Finally, we can look for the delimiter.
                 val d = delimIter.next() // Pick up where end of block/padding left off
                 val delimRegister = state.dfaRegistersPool.getFromPool("parseRemainder3")
-                input.resetPos(beforeDelimiter)
-                beforeDelimiter = input.markPos
-                delimRegister.reset(state, input, delimIter)
+                try {
+                  input.resetPos(beforeDelimiter)
+                  beforeDelimiter = input.markPos
+                  delimRegister.reset(state, input, delimIter)
 
-                d.run(delimRegister)
-                if (delimRegister.status == StateKind.Succeeded) {
-                  lmt.successfulMatch(
-                    delimRegister.matchStartPos,
-                    delimRegister.delimString,
-                    d,
-                    delimIter.currentIndex
-                  )
+                  d.run(delimRegister)
+                  if (delimRegister.status == StateKind.Succeeded) {
+                    lmt.successfulMatch(
+                      delimRegister.matchStartPos,
+                      delimRegister.delimString,
+                      d,
+                      delimIter.currentIndex
+                    )
+                  }
+                } finally {
+                  state.dfaRegistersPool.returnToPool(delimRegister)
                 }
-                state.dfaRegistersPool.returnToPool(delimRegister)
               }
               foundBlockEnd = true
               stillSearching = false
@@ -393,8 +408,10 @@ class TextDelimitedParserWithEscapeBlock(
       }
     }
 
-    state.dfaRegistersPool.returnToPool(fieldRegister)
     result
+    } finally {
+      state.dfaRegistersPool.returnToPool(fieldRegister)
+    }
   }
 
   def parse(

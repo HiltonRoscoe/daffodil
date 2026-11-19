@@ -41,17 +41,18 @@ class TextPaddingParser(val padChar: Char, override val context: TermRuntimeData
   ): Maybe[ParseResult] = {
 
     val paddingReg: Registers = state.dfaRegistersPool.getFromPool("TextPaddingParser1")
+    try {
+      paddingReg.reset(state, input, delimIter)
 
-    paddingReg.reset(state, input, delimIter)
+      paddingDFA.run(paddingReg) // Will always succeed.
 
-    paddingDFA.run(paddingReg) // Will always succeed.
+      val paddingValue = One(paddingReg.resultString.toString)
 
-    val paddingValue = One(paddingReg.resultString.toString)
-
-    state.dfaRegistersPool.returnToPool(paddingReg)
-    state.dfaRegistersPool.finalCheck()
-
-    One(new ParseResult(paddingValue, Nope, ArrayBuffer()))
+      One(new ParseResult(paddingValue, Nope, ArrayBuffer()))
+    } finally {
+      state.dfaRegistersPool.returnToPool(paddingReg)
+      state.dfaRegistersPool.finalCheck()
+    }
   }
 
 }
